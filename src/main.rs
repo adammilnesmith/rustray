@@ -1,3 +1,5 @@
+mod vec3;
+
 fn main() {
     let nx = 200u32;
     let ny = 100u32;
