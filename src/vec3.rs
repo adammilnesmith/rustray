@@ -37,6 +37,18 @@ impl<T: ops::Sub<Output=T>> ops::Sub for Vec3<T> {
     }
 }
 
+impl<T: ops::Mul<Output=T>> ops::Mul for Vec3<T> {
+    type Output = Vec3<T>;
+
+    #[inline]
+    fn mul(self, other: Vec3<T>) -> Self::Output {
+        Self {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+}
 
 macro_rules! mul_impl {
     ($($t:ty)*) => ($(
@@ -68,6 +80,18 @@ macro_rules! mul_impl {
 mul_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 f64 }
 
 
+impl<T: ops::Div<Output=T>> ops::Div for Vec3<T> {
+    type Output = Vec3<T>;
+
+    #[inline]
+    fn div(self, other: Vec3<T>) -> Self::Output {
+        Self {
+            x: self.x / other.x,
+            y: self.y / other.y,
+            z: self.z / other.z,
+        }
+    }
+}
 
 macro_rules! div_impl {
     ($($t:ty)*) => ($(
@@ -131,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_mul() {
-        assert_eq!(Vec3::new(1i32, 0i32, -1i32) * 2,
+        assert_eq!(Vec3::new(1, 0, -1) * 2,
                    Vec3::new(2, 0, -2));
         assert_eq!(2 * Vec3::new(1i32, 0i32, -1i32),
                    Vec3::new(2, 0, -2));
@@ -140,6 +164,9 @@ mod tests {
                    Vec3::new(2f64, 0f64, -2f64));
         assert_eq!(2f64 * Vec3::new(1f64, 0f64, -1f64),
                    Vec3::new(2f64, 0f64, -2f64));
+
+        assert_eq!(Vec3::new(1, 0, -1) * Vec3::new(4, 0, -2),
+                   Vec3::new(4, 0, 2));
     }
 
     #[test]
@@ -153,6 +180,9 @@ mod tests {
                    Vec3::new(1f64, 2f64, -3f64));
         assert_eq!(6f64 / Vec3::new(1f64, 2f64, -3f64),
                    Vec3::new(6f64, 3f64, -2f64));
+
+        assert_eq!(Vec3::new(2, 4, -6) / Vec3::new(2, 2, -3),
+                   Vec3::new(1, 2, 2));
     }
 
     #[test]
