@@ -7,6 +7,12 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
+impl<T> Vec3<T> {
+    pub fn new(x: T, y: T, z: T) -> Vec3<T> {
+        Vec3 { x, y, z }
+    }
+}
+
 impl<T: ops::Add<Output=T>> ops::Add for Vec3<T> {
     type Output = Self;
 
@@ -67,29 +73,24 @@ mod tests {
 
     #[test]
     fn test_add() {
-        assert_eq!(Vec3 { x: 1f64, y: 0f64, z: -1f64 }
-                       + Vec3 { x: 2f64, y: 3f64, z: 2f64 },
-                   Vec3 { x: 3f64, y: 3f64, z: 1f64 });
+        assert_eq!(Vec3::new(1f64, 0f64, -1f64) + Vec3::new(2f64, 3f64, 2f64),
+                   Vec3::new(3f64, 3f64, 1f64));
 
-        assert_eq!(Vec3 { x: 1, y: 0, z: -1 }
-                       + Vec3 { x: 2, y: 3, z: 2 },
-                   Vec3 { x: 3, y: 3, z: 1 });
+        assert_eq!(Vec3::new(1, 0, -1) + Vec3::new(2, 3, 2),
+                   Vec3::new(3, 3, 1));
     }
 
     #[test]
     fn test_sub() {
-        assert_eq!(Vec3 { x: 1, y: 0, z: -1 }
-                       - Vec3 { x: 2, y: 3, z: 2 },
-                   Vec3 { x: -1, y: -3, z: -3 });
+        assert_eq!(Vec3::new(1, 0, -1) - Vec3::new(2, 3, 2),
+                   Vec3::new(-1, -3, -3));
     }
 
     #[test]
     fn test_mul() {
-        assert_eq!(Vec3 { x: 1, y: 0, z: -1 }
-                       * 2,
-                   Vec3 { x: 2, y: 0, z: -2 });
-        assert_eq!(Vec3 { x: 1f64, y: 0f64, z: -1f64 }
-                       * 2f64,
-                   Vec3 { x: 2f64, y: 0f64, z: -2f64 });
+        assert_eq!(Vec3::new(1i32, 0i32, -1i32) * 2,
+                   Vec3::new(2, 0, -2));
+        assert_eq!(Vec3::new(1f64, 0f64, -1f64) * 2f64,
+                   Vec3::new(2f64, 0f64, -2f64));
     }
 }
