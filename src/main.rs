@@ -4,7 +4,7 @@ fn main() {
     println!("P3");
     println!("{} {}", nx, ny);
     println!("255");
-    for j in 0..ny {
+    for j in (0..ny).rev() {
         for i in 0..nx {
             let r = i as f32 / nx as f32;
             let g = j as f32 / ny as f32;
