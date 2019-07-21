@@ -102,6 +102,14 @@ macro_rules! div_impl {
 
 div_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 f64 }
 
+impl<T: ops::Neg<Output=T>> ops::Neg for Vec3<T> {
+    type Output = Vec3<T>;
+    fn neg(self) -> Vec3<T> {
+        Vec3::new(-self.x, -self.y, -self.z)
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -145,5 +153,14 @@ mod tests {
                    Vec3::new(1f64, 2f64, -3f64));
         assert_eq!(6f64 / Vec3::new(1f64, 2f64, -3f64),
                    Vec3::new(6f64, 3f64, -2f64));
+    }
+
+    #[test]
+    fn test_neg() {
+        assert_eq!(-Vec3::new(2, 0, -6),
+                   Vec3::new(-2, 0, 6));
+
+        assert_eq!(-Vec3::new(2f64, 0f64, -6f64),
+                   Vec3::new(-2f64, 0f64, 6f64));
     }
 }
