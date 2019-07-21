@@ -19,6 +19,18 @@ impl <T: ops::Add<Output = T>> ops::Add for Vec3<T> {
     }
 }
 
+impl <T: ops::Sub<Output = T>> ops::Sub for Vec3<T> {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -33,5 +45,12 @@ mod tests {
         assert_eq!(Vec3 { x: 1, y: 0, z: -1 }
                        + Vec3 { x: 2, y: 3, z: 2 },
                    Vec3 { x: 3, y: 3, z: 1 });
+    }
+
+    #[test]
+    fn test_sub() {
+        assert_eq!(Vec3 { x: 1, y: 0, z: -1 }
+                       - Vec3 { x: 2, y: 3, z: 2 },
+                   Vec3 { x: -1, y: -3, z: -3 });
     }
 }
