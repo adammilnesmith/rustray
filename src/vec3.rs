@@ -1,16 +1,16 @@
 use std::ops;
 
 #[derive(Debug, PartialEq)]
-pub struct Vec3 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+pub struct Vec3<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
 }
 
-impl ops::Add for Vec3 {
+impl <T: ops::Add<Output = T>> ops::Add for Vec3<T> {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: Self) -> Self::Output {
         Self {
             x: self.x + other.x,
             y: self.y + other.y,
@@ -29,5 +29,9 @@ mod tests {
         assert_eq!(Vec3 { x: 1f64, y: 0f64, z: -1f64 }
                        + Vec3 { x: 2f64, y: 3f64, z: 2f64 },
                    Vec3 { x: 3f64, y: 3f64, z: 1f64 });
+
+        assert_eq!(Vec3 { x: 1, y: 0, z: -1 }
+                       + Vec3 { x: 2, y: 3, z: 2 },
+                   Vec3 { x: 3, y: 3, z: 1 });
     }
 }
