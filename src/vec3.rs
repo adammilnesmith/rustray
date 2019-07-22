@@ -7,15 +7,30 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
-impl<T> Vec3<T> {
+impl<T: Copy + ops::Add<Output=T> + ops::Sub<Output=T> + ops::Mul<Output=T> + ops::Neg<Output=T>> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
+    }
+
+    #[inline]
+    pub fn dot(self, other: Vec3<T>) -> T {
+        (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
+    }
+
+    #[inline]
+    pub fn cross(self, other: Vec3<T>) -> Vec3<T> {
+        Self {
+            x: (self.y * other.z) - (self.z * other.y),
+            y: -((self.x * other.z) - (self.z * other.x)),
+            z: (self.x * other.y) - (self.y * other.x),
+        }
     }
 }
 
 impl<T: ops::Add<Output=T>> ops::Add for Vec3<T> {
     type Output = Self;
 
+    #[inline]
     fn add(self, other: Self) -> Self::Output {
         Self {
             x: self.x + other.x,
@@ -28,6 +43,7 @@ impl<T: ops::Add<Output=T>> ops::Add for Vec3<T> {
 impl<T: ops::Sub<Output=T>> ops::Sub for Vec3<T> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, other: Self) -> Self::Output {
         Self {
             x: self.x - other.x,
@@ -129,7 +145,11 @@ div_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 f64 }
 impl<T: ops::Neg<Output=T>> ops::Neg for Vec3<T> {
     type Output = Vec3<T>;
     fn neg(self) -> Vec3<T> {
-        Vec3::new(-self.x, -self.y, -self.z)
+        Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
     }
 }
 
@@ -192,5 +212,17 @@ mod tests {
 
         assert_eq!(-Vec3::new(2f64, 0f64, -6f64),
                    Vec3::new(-2f64, 0f64, 6f64));
+    }
+
+    #[test]
+    fn test_dot() {
+        assert_eq!(Vec3::new(1, 2, 3).dot(Vec3::new(4, -5, 6)),
+                   12);
+    }
+
+    #[test]
+    fn test_cross() {
+        assert_eq!(Vec3::new(3, -3, 1).cross(Vec3::new(4, 9, 2)),
+                   Vec3::new(-15, -2, 39));
     }
 }
