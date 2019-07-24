@@ -1,4 +1,5 @@
 use std::ops;
+use std::convert;
 
 #[derive(Debug, PartialEq)]
 pub struct Vec3<T> {
@@ -7,7 +8,9 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
-impl<T: Copy + ops::Add<Output=T> + ops::Sub<Output=T> + ops::Mul<Output=T> + ops::Neg<Output=T>> Vec3<T> {
+impl<T> Vec3<T>
+where T: Copy + ops::Add<Output=T> + ops::Sub<Output=T> + ops::Mul<Output=T> + ops::Neg<Output=T> + convert::Into<f64>//, Vec<T>: ToF64
+{
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
     }
@@ -25,7 +28,53 @@ impl<T: Copy + ops::Add<Output=T> + ops::Sub<Output=T> + ops::Mul<Output=T> + op
             z: (self.x * other.y) - (self.y * other.x),
         }
     }
+    /*
+    #[inline]
+    pub fn unit(self) -> Vec3<f64> {
+        let self_as_f64: Vec3<f64> = self.into_f64();
+        self_as_f64 / self.length()
+    }*/
+
+    #[inline]
+    pub fn length(self) -> f64 {
+        let squared_length: f64 = self.squared_length().into();
+        squared_length.sqrt()
+    }
+
+    #[inline]
+    pub fn squared_length(self) -> T {
+        (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
+    }
 }
+
+pub trait ToF64 {
+    fn into_f64(self) -> Vec3<f64>;
+}
+
+
+impl ToF64 for Vec3<f64> {
+    fn into_f64(self) -> Vec3<f64> {
+        self
+    }
+}
+
+macro_rules! into_impl {
+    ($($t:ty)*) => ($(
+        impl ToF64 for Vec3<$t> {
+            fn into_f64(self) -> Vec3<f64> {
+                Vec3 {
+                    x: self.x as f64,
+                    y: self.y as f64,
+                    z: self.z as f64,
+                }
+            }
+        }
+
+    )*)
+}
+
+into_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 }
+
 
 impl<T: ops::Add<Output=T>> ops::Add for Vec3<T> {
     type Output = Self;
@@ -177,7 +226,7 @@ mod tests {
     fn test_mul() {
         assert_eq!(Vec3::new(1, 0, -1) * 2,
                    Vec3::new(2, 0, -2));
-        assert_eq!(2 * Vec3::new(1i32, 0i32, -1i32),
+        assert_eq!(2 * Vec3::new(1, 0, -1),
                    Vec3::new(2, 0, -2));
 
         assert_eq!(Vec3::new(1f64, 0f64, -1f64) * 2f64,
@@ -224,5 +273,10 @@ mod tests {
     fn test_cross() {
         assert_eq!(Vec3::new(3, -3, 1).cross(Vec3::new(4, 9, 2)),
                    Vec3::new(-15, -2, 39));
+    }
+
+    #[test]
+    fn test_length() {
+        assert_eq!(Vec3::new(2, -2, 1).length(), 3f64);
     }
 }
