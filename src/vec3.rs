@@ -1,4 +1,8 @@
-use std::ops;
+use std::ops::Add;
+use std::ops::Sub;
+use std::ops::Mul;
+use std::ops::Div;
+use std::ops::Neg;
 use std::convert;
 
 #[derive(Debug, PartialEq)]
@@ -9,7 +13,9 @@ pub struct Vec3<T> {
 }
 
 impl<T> Vec3<T>
-where T: Copy + ops::Add<Output=T> + ops::Sub<Output=T> + ops::Mul<Output=T> + ops::Neg<Output=T> + convert::Into<f64>//, Vec<T>: ToF64
+    where T: Copy + Add<Output=T> + Sub<Output=T> + Mul<Output=T>
+    + Div<T, Output=T> + Div<Vec3<T>, Output=Vec3<T>>
+    + Neg<Output=T> + convert::Into<f64>//, Vec<T>: ToF64
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
@@ -76,7 +82,7 @@ macro_rules! into_impl {
 into_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 }
 
 
-impl<T: ops::Add<Output=T>> ops::Add for Vec3<T> {
+impl<T: Add<Output=T>> Add for Vec3<T> {
     type Output = Self;
 
     #[inline]
@@ -89,7 +95,7 @@ impl<T: ops::Add<Output=T>> ops::Add for Vec3<T> {
     }
 }
 
-impl<T: ops::Sub<Output=T>> ops::Sub for Vec3<T> {
+impl<T: Sub<Output=T>> Sub for Vec3<T> {
     type Output = Self;
 
     #[inline]
@@ -102,7 +108,7 @@ impl<T: ops::Sub<Output=T>> ops::Sub for Vec3<T> {
     }
 }
 
-impl<T: ops::Mul<Output=T>> ops::Mul for Vec3<T> {
+impl<T: Mul<Output=T>> Mul for Vec3<T> {
     type Output = Vec3<T>;
 
     #[inline]
@@ -117,7 +123,7 @@ impl<T: ops::Mul<Output=T>> ops::Mul for Vec3<T> {
 
 macro_rules! mul_impl {
     ($($t:ty)*) => ($(
-        impl ops::Mul<$t> for Vec3<$t> {
+        impl Mul<$t> for Vec3<$t> {
             type Output = Vec3<$t>;
 
             #[inline]
@@ -130,7 +136,7 @@ macro_rules! mul_impl {
             }
         }
 
-        impl ops::Mul<Vec3<$t>> for $t {
+        impl Mul<Vec3<$t>> for $t {
             type Output = Vec3<$t>;
 
             #[inline]
@@ -145,7 +151,7 @@ macro_rules! mul_impl {
 mul_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 f64 }
 
 
-impl<T: ops::Div<Output=T>> ops::Div for Vec3<T> {
+impl<T: Div<Output=T>> Div for Vec3<T> {
     type Output = Vec3<T>;
 
     #[inline]
@@ -160,7 +166,7 @@ impl<T: ops::Div<Output=T>> ops::Div for Vec3<T> {
 
 macro_rules! div_impl {
     ($($t:ty)*) => ($(
-        impl ops::Div<$t> for Vec3<$t> {
+        impl Div<$t> for Vec3<$t> {
             type Output = Vec3<$t>;
 
             #[inline]
@@ -173,7 +179,7 @@ macro_rules! div_impl {
             }
         }
 
-        impl ops::Div<Vec3<$t>> for $t {
+        impl Div<Vec3<$t>> for $t {
             type Output = Vec3<$t>;
 
             #[inline]
@@ -191,7 +197,7 @@ macro_rules! div_impl {
 
 div_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 f64 }
 
-impl<T: ops::Neg<Output=T>> ops::Neg for Vec3<T> {
+impl<T: Neg<Output=T>> Neg for Vec3<T> {
     type Output = Vec3<T>;
     fn neg(self) -> Vec3<T> {
         Vec3 {
