@@ -12,10 +12,24 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
+pub trait Number<Rhs = Self, Output = Self>:
+Add<Rhs, Output=Output>
++ Sub<Rhs, Output=Output>
++ Mul<Rhs, Output=Output>
++ Div<Rhs, Output=Output>
++ Neg<Output=Output>
+{}
+
+impl<T, Rhs, Output> Number<Rhs, Output> for T where
+    T: Add<Rhs, Output=Output>
+    + Sub<Rhs, Output=Output>
+    + Mul<Rhs, Output=Output>
+    + Div<Rhs, Output=Output>
+    + Neg<Output=Output>
+{}
+
 impl<T> Vec3<T>
-    where T: Copy + Add<Output=T> + Sub<Output=T> + Mul<Output=T>
-    + Div<T, Output=T> + Div<Vec3<T>, Output=Vec3<T>>
-    + Neg<Output=T> + convert::Into<f64>//, Vec<T>: ToF64
+    where T: Copy + Number + Div<Vec3<T>, Output=Vec3<T>> + convert::Into<f64>//, Vec<T>: ToF64
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
