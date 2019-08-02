@@ -1,9 +1,9 @@
-use std::ops::Add;
-use std::ops::Sub;
-use std::ops::Mul;
-use std::ops::Div;
-use std::ops::Neg;
 use std::convert;
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Neg;
+use std::ops::Sub;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Vec3<T> {
@@ -13,23 +13,27 @@ pub struct Vec3<T> {
 }
 
 pub trait Number<Rhs = Self, Output = Self>:
-Add<Rhs, Output=Output>
-+ Sub<Rhs, Output=Output>
-+ Mul<Rhs, Output=Output>
-+ Div<Rhs, Output=Output>
-+ Neg<Output=Output>
-{}
+    Add<Rhs, Output = Output>
+    + Sub<Rhs, Output = Output>
+    + Mul<Rhs, Output = Output>
+    + Div<Rhs, Output = Output>
+    + Neg<Output = Output>
+{
+}
 
 impl<T, Rhs, Output> Number<Rhs, Output> for T where
-    T: Add<Rhs, Output=Output>
-    + Sub<Rhs, Output=Output>
-    + Mul<Rhs, Output=Output>
-    + Div<Rhs, Output=Output>
-    + Neg<Output=Output>
-{}
+    T: Add<Rhs, Output = Output>
+        + Sub<Rhs, Output = Output>
+        + Mul<Rhs, Output = Output>
+        + Div<Rhs, Output = Output>
+        + Neg<Output = Output>
+{
+}
 
 impl<T> Vec3<T>
-    where T: Copy + Number + Div<Vec3<T>, Output=Vec3<T>> + convert::Into<f64>, Vec3<f64>: convert::From<Vec3<T>>,
+where
+    T: Copy + Number + Div<Vec3<T>, Output = Vec3<T>> + convert::Into<f64>,
+    Vec3<f64>: convert::From<Vec3<T>>,
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
@@ -84,7 +88,7 @@ macro_rules! into_impl {
 
 into_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 }
 
-impl<T: Add<Output=T>> Add for Vec3<T> {
+impl<T: Add<Output = T>> Add for Vec3<T> {
     type Output = Self;
 
     #[inline]
@@ -97,7 +101,7 @@ impl<T: Add<Output=T>> Add for Vec3<T> {
     }
 }
 
-impl<T: Sub<Output=T>> Sub for Vec3<T> {
+impl<T: Sub<Output = T>> Sub for Vec3<T> {
     type Output = Self;
 
     #[inline]
@@ -110,7 +114,7 @@ impl<T: Sub<Output=T>> Sub for Vec3<T> {
     }
 }
 
-impl<T: Mul<Output=T>> Mul for Vec3<T> {
+impl<T: Mul<Output = T>> Mul for Vec3<T> {
     type Output = Vec3<T>;
 
     #[inline]
@@ -152,8 +156,7 @@ macro_rules! mul_impl {
 
 mul_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 f64 }
 
-
-impl<T: Div<Output=T>> Div for Vec3<T> {
+impl<T: Div<Output = T>> Div for Vec3<T> {
     type Output = Vec3<T>;
 
     #[inline]
@@ -199,7 +202,7 @@ macro_rules! div_impl {
 
 div_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 f64 }
 
-impl<T: Neg<Output=T>> Neg for Vec3<T> {
+impl<T: Neg<Output = T>> Neg for Vec3<T> {
     type Output = Vec3<T>;
     fn neg(self) -> Vec3<T> {
         Vec3 {
@@ -210,77 +213,86 @@ impl<T: Neg<Output=T>> Neg for Vec3<T> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_add() {
-        assert_eq!(Vec3::new(1f64, 0f64, -1f64) + Vec3::new(2f64, 3f64, 2f64),
-                   Vec3::new(3f64, 3f64, 1f64));
+        assert_eq!(
+            Vec3::new(1f64, 0f64, -1f64) + Vec3::new(2f64, 3f64, 2f64),
+            Vec3::new(3f64, 3f64, 1f64)
+        );
 
-        assert_eq!(Vec3::new(1, 0, -1) + Vec3::new(2, 3, 2),
-                   Vec3::new(3, 3, 1));
+        assert_eq!(Vec3::new(1, 0, -1) + Vec3::new(2, 3, 2), Vec3::new(3, 3, 1));
     }
 
     #[test]
     fn test_sub() {
-        assert_eq!(Vec3::new(1, 0, -1) - Vec3::new(2, 3, 2),
-                   Vec3::new(-1, -3, -3));
+        assert_eq!(
+            Vec3::new(1, 0, -1) - Vec3::new(2, 3, 2),
+            Vec3::new(-1, -3, -3)
+        );
     }
 
     #[test]
     fn test_mul() {
-        assert_eq!(Vec3::new(1, 0, -1) * 2,
-                   Vec3::new(2, 0, -2));
-        assert_eq!(2 * Vec3::new(1, 0, -1),
-                   Vec3::new(2, 0, -2));
+        assert_eq!(Vec3::new(1, 0, -1) * 2, Vec3::new(2, 0, -2));
+        assert_eq!(2 * Vec3::new(1, 0, -1), Vec3::new(2, 0, -2));
 
-        assert_eq!(Vec3::new(1f64, 0f64, -1f64) * 2f64,
-                   Vec3::new(2f64, 0f64, -2f64));
-        assert_eq!(2f64 * Vec3::new(1f64, 0f64, -1f64),
-                   Vec3::new(2f64, 0f64, -2f64));
+        assert_eq!(
+            Vec3::new(1f64, 0f64, -1f64) * 2f64,
+            Vec3::new(2f64, 0f64, -2f64)
+        );
+        assert_eq!(
+            2f64 * Vec3::new(1f64, 0f64, -1f64),
+            Vec3::new(2f64, 0f64, -2f64)
+        );
 
-        assert_eq!(Vec3::new(1, 0, -1) * Vec3::new(4, 0, -2),
-                   Vec3::new(4, 0, 2));
+        assert_eq!(
+            Vec3::new(1, 0, -1) * Vec3::new(4, 0, -2),
+            Vec3::new(4, 0, 2)
+        );
     }
 
     #[test]
     fn test_div() {
-        assert_eq!(Vec3::new(2, 4, -6) / 2,
-                   Vec3::new(1, 2, -3));
-        assert_eq!(6 / Vec3::new(1, 2, -3),
-                   Vec3::new(6, 3, -2));
+        assert_eq!(Vec3::new(2, 4, -6) / 2, Vec3::new(1, 2, -3));
+        assert_eq!(6 / Vec3::new(1, 2, -3), Vec3::new(6, 3, -2));
 
-        assert_eq!(Vec3::new(2f64, 4f64, -6f64) / 2f64,
-                   Vec3::new(1f64, 2f64, -3f64));
-        assert_eq!(6f64 / Vec3::new(1f64, 2f64, -3f64),
-                   Vec3::new(6f64, 3f64, -2f64));
+        assert_eq!(
+            Vec3::new(2f64, 4f64, -6f64) / 2f64,
+            Vec3::new(1f64, 2f64, -3f64)
+        );
+        assert_eq!(
+            6f64 / Vec3::new(1f64, 2f64, -3f64),
+            Vec3::new(6f64, 3f64, -2f64)
+        );
 
-        assert_eq!(Vec3::new(2, 4, -6) / Vec3::new(2, 2, -3),
-                   Vec3::new(1, 2, 2));
+        assert_eq!(
+            Vec3::new(2, 4, -6) / Vec3::new(2, 2, -3),
+            Vec3::new(1, 2, 2)
+        );
     }
 
     #[test]
     fn test_neg() {
-        assert_eq!(-Vec3::new(2, 0, -6),
-                   Vec3::new(-2, 0, 6));
+        assert_eq!(-Vec3::new(2, 0, -6), Vec3::new(-2, 0, 6));
 
-        assert_eq!(-Vec3::new(2f64, 0f64, -6f64),
-                   Vec3::new(-2f64, 0f64, 6f64));
+        assert_eq!(-Vec3::new(2f64, 0f64, -6f64), Vec3::new(-2f64, 0f64, 6f64));
     }
 
     #[test]
     fn test_dot() {
-        assert_eq!(Vec3::new(1, 2, 3).dot(Vec3::new(4, -5, 6)),
-                   12);
+        assert_eq!(Vec3::new(1, 2, 3).dot(Vec3::new(4, -5, 6)), 12);
     }
 
     #[test]
     fn test_cross() {
-        assert_eq!(Vec3::new(3, -3, 1).cross(Vec3::new(4, 9, 2)),
-                   Vec3::new(-15, -2, 39));
+        assert_eq!(
+            Vec3::new(3, -3, 1).cross(Vec3::new(4, 9, 2)),
+            Vec3::new(-15, -2, 39)
+        );
     }
 
     #[test]
