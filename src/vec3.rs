@@ -5,7 +5,7 @@ use std::ops::Div;
 use std::ops::Neg;
 use std::convert;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Vec3<T> {
     pub x: T,
     pub y: T,
@@ -29,7 +29,7 @@ impl<T, Rhs, Output> Number<Rhs, Output> for T where
 {}
 
 impl<T> Vec3<T>
-    where T: Copy + Number + Div<Vec3<T>, Output=Vec3<T>> + convert::Into<f64>//, Vec<T>: ToF64
+    where T: Copy + Number + Div<Vec3<T>, Output=Vec3<T>> + convert::Into<f64>, Vec3<f64>: convert::From<Vec3<T>>,
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
@@ -48,12 +48,12 @@ impl<T> Vec3<T>
             z: (self.x * other.y) - (self.y * other.x),
         }
     }
-    /*
+
     #[inline]
     pub fn unit(self) -> Vec3<f64> {
-        let self_as_f64: Vec3<f64> = self.into_f64();
+        let self_as_f64: Vec3<f64> = self.into();
         self_as_f64 / self.length()
-    }*/
+    }
 
     #[inline]
     pub fn length(self) -> f64 {
@@ -67,25 +67,14 @@ impl<T> Vec3<T>
     }
 }
 
-pub trait ToF64 {
-    fn into_f64(self) -> Vec3<f64>;
-}
-
-
-impl ToF64 for Vec3<f64> {
-    fn into_f64(self) -> Vec3<f64> {
-        self
-    }
-}
-
 macro_rules! into_impl {
     ($($t:ty)*) => ($(
-        impl ToF64 for Vec3<$t> {
-            fn into_f64(self) -> Vec3<f64> {
+        impl From<Vec3<$t>> for Vec3<f64> {
+            fn from(other: Vec3<$t>) -> Self {
                 Vec3 {
-                    x: self.x as f64,
-                    y: self.y as f64,
-                    z: self.z as f64,
+                    x: other.x as f64,
+                    y: other.y as f64,
+                    z: other.z as f64,
                 }
             }
         }
@@ -94,7 +83,6 @@ macro_rules! into_impl {
 }
 
 into_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 f32 }
-
 
 impl<T: Add<Output=T>> Add for Vec3<T> {
     type Output = Self;
@@ -298,5 +286,16 @@ mod tests {
     #[test]
     fn test_length() {
         assert_eq!(Vec3::new(2, -2, 1).length(), 3f64);
+    }
+
+    #[test]
+    fn test_unit() {
+        assert_eq!(Vec3::new(2, 0, 0).unit(), Vec3::new(1f64, 0f64, 0f64));
+        assert_eq!(Vec3::new(-2, 0, 0).unit(), Vec3::new(-1f64, 0f64, 0f64));
+        assert_eq!(Vec3::new(0, 2, 0).unit(), Vec3::new(0f64, 1f64, 0f64));
+        assert_eq!(Vec3::new(0, -2, 0).unit(), Vec3::new(0f64, -1f64, 0f64));
+        assert_eq!(Vec3::new(0, 0, 2).unit(), Vec3::new(0f64, 0f64, 1f64));
+        assert_eq!(Vec3::new(0, 0, -2).unit(), Vec3::new(0f64, 0f64, -1f64));
+        assert_eq!(Vec3::new(3, 4, 0).unit(), Vec3::new(0.6f64, 0.8f64, 0f64));
     }
 }
