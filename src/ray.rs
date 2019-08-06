@@ -1,4 +1,3 @@
-use std::convert;
 use vec3::{NumWithVectorOps, Vec3, VectorWithOps};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -9,9 +8,8 @@ pub struct Ray<T> {
 
 impl<T> Ray<T>
 where
-    T: Copy + NumWithVectorOps + convert::Into<f64>,
+    T: Copy + NumWithVectorOps,
     Vec3<T>: VectorWithOps<T>,
-    Vec3<f64>: convert::From<Vec3<T>>,
 {
     pub fn new(origin: Vec3<T>, direction: Vec3<T>) -> Ray<T> {
         Ray { origin, direction }

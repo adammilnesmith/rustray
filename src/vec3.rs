@@ -9,7 +9,8 @@ pub struct Vec3<T> {
 }
 
 pub trait Number<Rhs = Self, Output = Self>:
-    Add<Rhs, Output = Output>
+    Copy
+    + Add<Rhs, Output = Output>
     + Sub<Rhs, Output = Output>
     + Mul<Rhs, Output = Output>
     + Div<Rhs, Output = Output>
@@ -18,7 +19,8 @@ pub trait Number<Rhs = Self, Output = Self>:
 }
 
 impl<T, Rhs, Output> Number<Rhs, Output> for T where
-    T: Add<Rhs, Output = Output>
+    T: Copy
+        + Add<Rhs, Output = Output>
         + Sub<Rhs, Output = Output>
         + Mul<Rhs, Output = Output>
         + Div<Rhs, Output = Output>
@@ -27,12 +29,15 @@ impl<T, Rhs, Output> Number<Rhs, Output> for T where
 }
 
 pub trait NumWithVectorOps<T = Self>:
-    Number<T, T> + Div<Vec3<T>, Output = Vec3<T>> + Mul<Vec3<T>, Output = Vec3<T>>
+    Number<T, T> + convert::Into<f64> + Div<Vec3<T>, Output = Vec3<T>> + Mul<Vec3<T>, Output = Vec3<T>>
 {
 }
 
 impl<T> NumWithVectorOps for T where
-    T: Number + Div<Vec3<T>, Output = Vec3<T>> + Mul<Vec3<T>, Output = Vec3<T>>
+    T: Number
+        + Div<Vec3<T>, Output = Vec3<T>>
+        + Mul<Vec3<T>, Output = Vec3<T>>
+        + convert::Into<f64>
 {
 }
 
@@ -43,6 +48,7 @@ pub trait VectorWithOps<T>:
     + Mul<Vec3<T>, Output = Vec3<T>>
     + Div<T, Output = Vec3<T>>
     + Mul<T, Output = Vec3<T>>
+    + convert::Into<Vec3<f64>>
 {
 }
 
@@ -54,15 +60,15 @@ where
         + Div<Vec3<T>, Output = Vec3<T>>
         + Mul<Vec3<T>, Output = Vec3<T>>
         + Div<T, Output = Vec3<T>>
-        + Mul<T, Output = Vec3<T>>,
+        + Mul<T, Output = Vec3<T>>
+        + convert::Into<Vec3<f64>>,
 {
 }
 
 impl<T> Vec3<T>
 where
-    T: Copy + NumWithVectorOps + convert::Into<f64>,
+    T: NumWithVectorOps,
     Vec3<T>: VectorWithOps<T>,
-    Vec3<f64>: convert::From<Vec3<T>>,
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
@@ -72,9 +78,8 @@ where
     fn map<B, F>(self, f: F) -> Vec3<B>
     where
         F: Fn(T) -> B,
-        B: Copy + NumWithVectorOps + convert::Into<f64>,
+        B: NumWithVectorOps,
         Vec3<B>: VectorWithOps<B>,
-        Vec3<f64>: convert::From<Vec3<B>>,
     {
         Vec3::new(f(self.x), f(self.y), f(self.z))
     }
@@ -95,8 +100,7 @@ where
 
     #[inline]
     pub fn unit(self) -> Vec3<f64> {
-        let self_as_f64: Vec3<f64> = self.into();
-        self_as_f64 / self.length()
+        self.into() / self.length()
     }
 
     #[inline]
