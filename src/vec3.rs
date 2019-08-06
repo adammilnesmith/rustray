@@ -75,6 +75,36 @@ where
     }
 
     #[inline]
+    pub fn x(self) -> T {
+        self.x
+    }
+
+    #[inline]
+    pub fn y(self) -> T {
+        self.y
+    }
+
+    #[inline]
+    pub fn z(self) -> T {
+        self.z
+    }
+
+    #[inline]
+    pub fn r(self) -> T {
+        self.x
+    }
+
+    #[inline]
+    pub fn g(self) -> T {
+        self.y
+    }
+
+    #[inline]
+    pub fn b(self) -> T {
+        self.z
+    }
+
+    #[inline]
     fn map<B, F>(self, f: F) -> Vec3<B>
     where
         F: Fn(T) -> B,
