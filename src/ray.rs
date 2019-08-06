@@ -1,6 +1,5 @@
 use std::convert;
-use std::ops::{Add, Div, Mul};
-use vec3::{Number, Vec3};
+use vec3::{NumWithVectorOps, Vec3, VectorWithOps};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Ray<T> {
@@ -10,12 +9,8 @@ pub struct Ray<T> {
 
 impl<T> Ray<T>
 where
-    T: Copy
-        + Number
-        + Div<Vec3<T>, Output = Vec3<T>>
-        + Mul<Vec3<T>, Output = Vec3<T>>
-        + convert::Into<f64>,
-    Vec3<T>: Add<Vec3<T>, Output = Vec3<T>> + Mul<T, Output = Vec3<T>>,
+    T: Copy + NumWithVectorOps + convert::Into<f64>,
+    Vec3<T>: VectorWithOps<T>,
     Vec3<f64>: convert::From<Vec3<T>>,
 {
     pub fn new(origin: Vec3<T>, direction: Vec3<T>) -> Ray<T> {

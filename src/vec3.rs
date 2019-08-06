@@ -26,9 +26,42 @@ impl<T, Rhs, Output> Number<Rhs, Output> for T where
 {
 }
 
+pub trait NumWithVectorOps<T = Self>:
+    Number<T, T> + Div<Vec3<T>, Output = Vec3<T>> + Mul<Vec3<T>, Output = Vec3<T>>
+{
+}
+
+impl<T> NumWithVectorOps for T where
+    T: Number + Div<Vec3<T>, Output = Vec3<T>> + Mul<Vec3<T>, Output = Vec3<T>>
+{
+}
+
+pub trait VectorWithOps<T>:
+    Add<Vec3<T>, Output = Vec3<T>>
+    + Sub<Vec3<T>, Output = Vec3<T>>
+    + Div<Vec3<T>, Output = Vec3<T>>
+    + Mul<Vec3<T>, Output = Vec3<T>>
+    + Div<T, Output = Vec3<T>>
+    + Mul<T, Output = Vec3<T>>
+{
+}
+
+impl<T> VectorWithOps<T> for Vec3<T>
+where
+    T: NumWithVectorOps<T>,
+    Vec3<T>: Add<Vec3<T>, Output = Vec3<T>>
+        + Sub<Vec3<T>, Output = Vec3<T>>
+        + Div<Vec3<T>, Output = Vec3<T>>
+        + Mul<Vec3<T>, Output = Vec3<T>>
+        + Div<T, Output = Vec3<T>>
+        + Mul<T, Output = Vec3<T>>,
+{
+}
+
 impl<T> Vec3<T>
 where
-    T: Copy + Number + Div<Vec3<T>, Output = Vec3<T>> + convert::Into<f64>,
+    T: Copy + NumWithVectorOps + convert::Into<f64>,
+    Vec3<T>: VectorWithOps<T>,
     Vec3<f64>: convert::From<Vec3<T>>,
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
