@@ -69,6 +69,17 @@ where
     }
 
     #[inline]
+    fn map<B, F>(self, f: F) -> Vec3<B>
+    where
+        F: Fn(T) -> B,
+        B: Copy + NumWithVectorOps + convert::Into<f64>,
+        Vec3<B>: VectorWithOps<B>,
+        Vec3<f64>: convert::From<Vec3<B>>,
+    {
+        Vec3::new(f(self.x), f(self.y), f(self.z))
+    }
+
+    #[inline]
     pub fn dot(self, other: Vec3<T>) -> T {
         (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
     }
@@ -245,6 +256,14 @@ impl<T: Neg<Output = T>> Neg for Vec3<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_map() {
+        assert_eq!(
+            Vec3::new(1, 0, -1).map(f64::from),
+            Vec3::new(1f64, 0f64, -1f64)
+        );
+    }
 
     #[test]
     fn test_add() {
