@@ -6,7 +6,12 @@ use vec3::Vec3;
 fn sky_color(ray: Ray<f64>) -> Vec3<f64> {
     let unit_direction = ray.direction().unit();
     let t = 0.5 * (unit_direction.y() + 1.0);
-    ((1.0 - t) * Vec3::new(1.0, 1.0, 1.0)) + (t * Vec3::new(0.5, 0.7, 1.0))
+    interpolate(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0), t)
+}
+
+#[inline]
+fn interpolate(first: Vec3<f64>, second: Vec3<f64>, factor: f64) -> Vec3<f64> {
+    first * factor + second * (1.0 - factor)
 }
 
 fn main() {
