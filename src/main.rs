@@ -3,6 +3,23 @@ mod vec3;
 use ray::Ray;
 use vec3::Vec3;
 
+fn color(ray: Ray<f64>) -> Vec3<f64> {
+    if hit_sphere(ray, Vec3::new(0.0, 0.0, -1.0), 0.5) {
+        Vec3::new(1.0, 0.0, 0.0)
+    } else {
+        sky_color(ray)
+    }
+}
+
+fn hit_sphere(ray: Ray<f64>, center: Vec3<f64>, radius: f64) -> bool {
+    let oc = ray.origin() - center;
+    let a = ray.direction().dot(ray.direction());
+    let b = 2.0 * oc.dot(ray.direction());
+    let c = oc.dot(oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant > 0.0
+}
+
 fn sky_color(ray: Ray<f64>) -> Vec3<f64> {
     let unit_direction = ray.direction().unit();
     let t = 0.5 * (unit_direction.y() + 1.0);
@@ -33,7 +50,7 @@ fn main() {
 
             let ray = Ray::new(origin, lower_left + (u * horizontal) + (v * vertical));
 
-            let colour: Vec3<f64> = sky_color(ray) * 255.99;
+            let colour: Vec3<f64> = color(ray) * 255.99;
             println!(
                 "{} {} {}",
                 colour.r() as u32,
