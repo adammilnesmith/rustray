@@ -4,20 +4,29 @@ use ray::Ray;
 use vec3::Vec3;
 
 fn color(ray: Ray<f64>) -> Vec3<f64> {
-    if hit_sphere(ray, Vec3::new(0.0, 0.0, -1.0), 0.5) {
-        Vec3::new(1.0, 0.0, 0.0)
+    let sphere_center = Vec3::new(0.0, 0.0, -1.0);
+    let sphere_radius = 0.5;
+    let t = hit_sphere(ray, sphere_center, sphere_radius);
+    if t > 0.0 {
+        let hit_point = ray.point_at_parameter(t);
+        let normal = (hit_point - sphere_center).unit();
+        sphere_radius * normal.map(|i: f64| -> f64 { i + 1.0 })
     } else {
         sky_color(ray)
     }
 }
 
-fn hit_sphere(ray: Ray<f64>, center: Vec3<f64>, radius: f64) -> bool {
+fn hit_sphere(ray: Ray<f64>, center: Vec3<f64>, radius: f64) -> f64 {
     let oc = ray.origin() - center;
     let a = ray.direction().dot(ray.direction());
     let b = 2.0 * oc.dot(ray.direction());
     let c = oc.dot(oc) - radius * radius;
     let discriminant = b * b - 4.0 * a * c;
-    discriminant > 0.0
+    if discriminant < 0.0 {
+        -1.0 // TODO: make this an Option
+    } else {
+        (-b - discriminant.sqrt()) / (2.0 * a)
+    }
 }
 
 fn sky_color(ray: Ray<f64>) -> Vec3<f64> {
@@ -32,8 +41,8 @@ fn interpolate(first: Vec3<f64>, second: Vec3<f64>, factor: f64) -> Vec3<f64> {
 }
 
 fn main() {
-    let nx = 200u32;
-    let ny = 100u32;
+    let nx = 800u32;
+    let ny = 400u32;
     println!("P3");
     println!("{} {}", nx, ny);
     println!("255");

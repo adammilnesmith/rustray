@@ -105,7 +105,7 @@ where
     }
 
     #[inline]
-    fn map<B, F>(self, f: F) -> Vec3<B>
+    pub fn map<B, F>(self, f: F) -> Vec3<B>
     where
         F: Fn(T) -> B,
         B: NumWithVectorOps,
