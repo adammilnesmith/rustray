@@ -1,16 +1,16 @@
+mod hittable;
 mod ray;
 mod vec3;
+use hittable::{Hittable, Sphere};
 use ray::Ray;
 use vec3::Vec3;
 
 fn color(ray: Ray<f64>) -> Vec3<f64> {
-    let sphere_center = Vec3::new(0.0, 0.0, -1.0);
-    let sphere_radius = 0.5;
-    let t = hit_sphere(ray, sphere_center, sphere_radius);
-    if t.is_some() {
-        let hit_point = ray.point_at_parameter(t.unwrap());
-        let normal = (hit_point - sphere_center).unit();
-        sphere_radius * normal.map(|i: f64| -> f64 { i + 1.0 })
+    let sphere = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
+    let hit = sphere.hit(ray);
+    if hit.is_some() {
+        let normal = (hit.unwrap() - sphere.center()).unit();
+        sphere.radius() * normal.map(|i: f64| -> f64 { i + 1.0 })
     } else {
         sky_color(ray)
     }
