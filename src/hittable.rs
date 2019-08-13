@@ -47,7 +47,6 @@ impl Hittable<f64> for World<f64> {
             .flat_map(|option| option.into_iter())
             .filter(|hit| hit.t() > 0.0)
             .min_by(|hit_a, hit_b| hit_a.t().partial_cmp(&hit_b.t()).unwrap())
-            .map(|hit| hit.clone())
     }
 }
 
