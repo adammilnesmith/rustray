@@ -1,6 +1,8 @@
+mod camera;
 mod hittable;
 mod ray;
 mod vec3;
+use camera::Camera;
 use hittable::{Hittable, Sphere, World};
 use ray::Ray;
 use vec3::Vec3;
@@ -33,10 +35,12 @@ fn main() {
     println!("{} {}", nx, ny);
     println!("255");
 
-    let lower_left: Vec3<f64> = Vec3::new(-2.0, -1.0, -1.0);
-    let horizontal: Vec3<f64> = Vec3::new(4.0, 0.0, 0.0);
-    let vertical: Vec3<f64> = Vec3::new(0.0, 2.0, 0.0);
-    let origin: Vec3<f64> = Vec3::new(0.0, 0.0, 0.0);
+    let camera: Camera<f64> = Camera::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(-2.0, -1.0, -1.0),
+        Vec3::new(4.0, 0.0, 0.0),
+        Vec3::new(0.0, 2.0, 0.0),
+    );
 
     let world: Box<Hittable<f64>> = Box::new(World::new(vec![
         Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)),
@@ -48,7 +52,7 @@ fn main() {
             let u = f64::from(i) / f64::from(nx);
             let v = f64::from(j) / f64::from(ny);
 
-            let ray = Ray::new(origin, lower_left + (u * horizontal) + (v * vertical));
+            let ray = camera.get_ray(u, v);
 
             let colour: Vec3<f64> = color(ray, &world) * 255.99;
             println!(
