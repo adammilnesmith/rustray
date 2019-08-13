@@ -1,31 +1,17 @@
 mod hittable;
 mod ray;
 mod vec3;
-use hittable::{Hittable, Sphere};
+use hittable::{Hittable, Sphere, World};
 use ray::Ray;
 use vec3::Vec3;
 
-fn color(ray: Ray<f64>) -> Vec3<f64> {
-    let sphere = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
-    let hit = sphere.hit(ray);
+fn color(ray: Ray<f64>, hittable: &Box<dyn Hittable<f64>>) -> Vec3<f64> {
+    let hit = hittable.normal_if_hit(ray);
     if hit.is_some() {
-        let normal = (hit.unwrap() - sphere.center()).unit();
-        sphere.radius() * normal.map(|i: f64| -> f64 { i + 1.0 })
+        let normal = hit.unwrap().normal().direction();
+        0.5 * normal.map(|i: f64| -> f64 { i + 1.0 })
     } else {
         sky_color(ray)
-    }
-}
-
-fn hit_sphere(ray: Ray<f64>, center: Vec3<f64>, radius: f64) -> Option<f64> {
-    let oc = ray.origin() - center;
-    let a = ray.direction().dot(ray.direction());
-    let b = 2.0 * oc.dot(ray.direction());
-    let c = oc.dot(oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    if discriminant < 0.0 {
-        None
-    } else {
-        Some((-b - discriminant.sqrt()) / (2.0 * a))
     }
 }
 
@@ -52,6 +38,11 @@ fn main() {
     let vertical: Vec3<f64> = Vec3::new(0.0, 2.0, 0.0);
     let origin: Vec3<f64> = Vec3::new(0.0, 0.0, 0.0);
 
+    let world: Box<Hittable<f64>> = Box::new(World::new(vec![
+        Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)),
+        Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)),
+    ]));
+
     for j in (0..ny).rev() {
         for i in 0..nx {
             let u = f64::from(i) / f64::from(nx);
@@ -59,7 +50,7 @@ fn main() {
 
             let ray = Ray::new(origin, lower_left + (u * horizontal) + (v * vertical));
 
-            let colour: Vec3<f64> = color(ray) * 255.99;
+            let colour: Vec3<f64> = color(ray, &world) * 255.99;
             println!(
                 "{} {} {}",
                 colour.r() as u32,

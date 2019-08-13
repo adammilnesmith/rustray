@@ -1,8 +1,54 @@
 use ray::Ray;
-use vec3::{NumWithVectorOps, Vec3, VectorWithOps};
+use vec3::Vec3;
 
 pub trait Hittable<T> {
-    fn hit(self, ray: Ray<T>) -> Option<Vec3<T>>;
+    fn normal_if_hit(&self, ray: Ray<T>) -> Option<Hit<T>>;
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub struct Hit<T> {
+    pub t: T,
+    pub normal: Ray<T>,
+}
+
+impl<T> Hit<T> {
+    pub fn new(t: T, normal: Ray<T>) -> Hit<T> {
+        Hit { t, normal }
+    }
+
+    pub fn t(self) -> T {
+        self.t
+    }
+
+    pub fn normal(self) -> Ray<T> {
+        self.normal
+    }
+}
+
+pub struct World<T> {
+    pub objects: Vec<Box<dyn Hittable<T>>>,
+}
+
+impl World<f64> {
+    pub fn new(objects: Vec<Box<Hittable<f64>>>) -> World<f64> {
+        World { objects }
+    }
+
+    pub fn objects(&self) -> &Vec<Box<Hittable<f64>>> {
+        &self.objects
+    }
+}
+
+impl Hittable<f64> for World<f64> {
+    fn normal_if_hit(&self, ray: Ray<f64>) -> Option<Hit<f64>> {
+        self.objects()
+            .iter()
+            .map(|hittable| hittable.normal_if_hit(ray))
+            .flat_map(|option| option.into_iter())
+            .filter(|hit| hit.t() > 0.0)
+            .min_by(|hit_a, hit_b| hit_a.t().partial_cmp(&hit_b.t()).unwrap())
+            .map(|hit| hit.clone())
+    }
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -26,7 +72,7 @@ impl Sphere<f64> {
 }
 
 impl Hittable<f64> for Sphere<f64> {
-    fn hit(self, ray: Ray<f64>) -> Option<Vec3<f64>> {
+    fn normal_if_hit(&self, ray: Ray<f64>) -> Option<Hit<f64>> {
         let oc = ray.origin() - self.center;
         let a = ray.direction().dot(ray.direction());
         let b = 2.0 * oc.dot(ray.direction());
@@ -36,7 +82,9 @@ impl Hittable<f64> for Sphere<f64> {
             None
         } else {
             let t = (-b - discriminant.sqrt()) / (2.0 * a);
-            Some(ray.point_at_parameter(t))
+            let hit_point = ray.point_at_parameter(t);
+            let normal = (hit_point - self.center()).unit();
+            Some(Hit::new(t, Ray::new(hit_point, normal)))
         }
     }
 }
