@@ -2,8 +2,11 @@ mod camera;
 mod hittable;
 mod ray;
 mod vec3;
+extern crate rand;
 use camera::Camera;
 use hittable::{Hittable, Sphere, World};
+use rand::prelude::ThreadRng;
+use rand::Rng;
 use ray::Ray;
 use vec3::Vec3;
 
@@ -28,9 +31,21 @@ fn interpolate(first: Vec3<f64>, second: Vec3<f64>, factor: f64) -> Vec3<f64> {
     first * factor + second * (1.0 - factor)
 }
 
+#[inline]
+fn get_pixel_with_randomness(i: u32, nx: u32) -> f64 {
+    let mut rng: ThreadRng = rand::thread_rng();
+    (f64::from(i) + rng.gen::<f64>()) / f64::from(nx)
+}
+
+#[inline]
+fn get_pixel(i: u32, nx: u32) -> f64 {
+    f64::from(i) / f64::from(nx)
+}
+
 fn main() {
     let nx = 800u32;
     let ny = 400u32;
+    let samples = 9;
     println!("P3");
     println!("{} {}", nx, ny);
     println!("255");
@@ -47,19 +62,25 @@ fn main() {
         Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)),
     ]));
 
+    let get_pixel_location: fn(u32, u32) -> f64 = match samples {
+        1 => get_pixel,
+        _ => get_pixel_with_randomness,
+    };
+
     for j in (0..ny).rev() {
         for i in 0..nx {
-            let u = f64::from(i) / f64::from(nx);
-            let v = f64::from(j) / f64::from(ny);
+            let average_colour: Vec3<f64> = (0..samples)
+                .map(|sample| camera.get_ray(get_pixel_location(i, nx), get_pixel_location(j, ny)))
+                .map(|ray| color(ray, &world))
+                .fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
+                / f64::from(samples);
 
-            let ray = camera.get_ray(u, v);
-
-            let colour: Vec3<f64> = color(ray, &world) * 255.99;
+            let pixel_colour: Vec3<f64> = average_colour * 255.99;
             println!(
                 "{} {} {}",
-                colour.r() as u32,
-                colour.g() as u32,
-                colour.b() as u32
+                pixel_colour.r() as u32,
+                pixel_colour.g() as u32,
+                pixel_colour.b() as u32
             );
         }
     }
