@@ -13,11 +13,30 @@ use vec3::Vec3;
 fn color(ray: Ray<f64>, hittable: &Box<dyn Hittable<f64>>) -> Vec3<f64> {
     let hit = hittable.normal_if_hit(ray);
     if hit.is_some() {
-        let normal = hit.unwrap().normal().direction();
-        0.5 * normal.map(|i: f64| -> f64 { i + 1.0 })
+        let normal = hit.unwrap().normal();
+        let target = normal.origin() + normal.direction() + random_in_unit_sphere();
+        0.5 * color(
+            Ray::new(normal.origin(), target - normal.origin()),
+            hittable,
+        )
+    //TODO: decide how to toggle normals rather than commenting this out
+    //0.5 * normal.direction().map(|i: f64| -> f64 { i + 1.0 })
     } else {
         sky_color(ray)
     }
+}
+
+fn random_in_unit_sphere() -> Vec3<f64> {
+    let mut rng: ThreadRng = rand::thread_rng();
+    let mut p: Vec3<f64>;
+    loop {
+        p = 2.0 * Vec3::new(rng.gen::<f64>(), rng.gen::<f64>(), rng.gen::<f64>())
+            - Vec3::new(1f64, 1f64, 1f64);
+        if p.squared_length() < 1.0 {
+            break;
+        }
+    }
+    p
 }
 
 fn sky_color(ray: Ray<f64>) -> Vec3<f64> {
