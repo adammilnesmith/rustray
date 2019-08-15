@@ -94,7 +94,7 @@ fn main() {
                 .fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
                 / f64::from(samples);
 
-            let pixel_colour: Vec3<f64> = average_colour * 255.99;
+            let pixel_colour: Vec3<f64> = average_colour.map(f64::sqrt) * 255.99;
             println!(
                 "{} {} {}",
                 pixel_colour.r() as u32,
