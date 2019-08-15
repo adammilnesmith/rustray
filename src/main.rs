@@ -10,13 +10,15 @@ use rand::Rng;
 use ray::Ray;
 use vec3::Vec3;
 
-fn color(ray: Ray<f64>, hittable: &Box<dyn Hittable<f64>>) -> Vec3<f64> {
-    let hit = hittable.normal_if_hit(ray);
+fn color(ray: Ray<f64>, min_t: f64, max_t: f64, hittable: &Box<dyn Hittable<f64>>) -> Vec3<f64> {
+    let hit = hittable.normal_if_hit(ray, min_t, max_t);
     if hit.is_some() {
         let normal = hit.unwrap().normal();
         let target = normal.origin() + normal.direction() + random_in_unit_sphere();
         0.5 * color(
             Ray::new(normal.origin(), target - normal.origin()),
+            0.0001,
+            std::f64::MAX,
             hittable,
         )
     //TODO: decide how to toggle normals rather than commenting this out
@@ -90,7 +92,7 @@ fn main() {
         for i in 0..nx {
             let average_colour: Vec3<f64> = (0..samples)
                 .map(|sample| camera.get_ray(get_pixel_location(i, nx), get_pixel_location(j, ny)))
-                .map(|ray| color(ray, &world))
+                .map(|ray| color(ray, 0.0001, std::f64::MAX, &world))
                 .fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
                 / f64::from(samples);
 

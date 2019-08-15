@@ -2,7 +2,7 @@ use ray::Ray;
 use vec3::Vec3;
 
 pub trait Hittable<T> {
-    fn normal_if_hit(&self, ray: Ray<T>) -> Option<Hit<T>>;
+    fn normal_if_hit(&self, ray: Ray<T>, min_t: T, max_t: T) -> Option<Hit<T>>;
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -40,12 +40,11 @@ impl World<f64> {
 }
 
 impl Hittable<f64> for World<f64> {
-    fn normal_if_hit(&self, ray: Ray<f64>) -> Option<Hit<f64>> {
+    fn normal_if_hit(&self, ray: Ray<f64>, min_t: f64, max_t: f64) -> Option<Hit<f64>> {
         self.objects()
             .iter()
-            .map(|hittable| hittable.normal_if_hit(ray))
+            .map(|hittable| hittable.normal_if_hit(ray, min_t, max_t))
             .flat_map(|option| option.into_iter())
-            .filter(|hit| hit.t() > 0.0)
             .min_by(|hit_a, hit_b| hit_a.t().partial_cmp(&hit_b.t()).unwrap())
     }
 }
@@ -71,7 +70,7 @@ impl Sphere<f64> {
 }
 
 impl Hittable<f64> for Sphere<f64> {
-    fn normal_if_hit(&self, ray: Ray<f64>) -> Option<Hit<f64>> {
+    fn normal_if_hit(&self, ray: Ray<f64>, min_t: f64, max_t: f64) -> Option<Hit<f64>> {
         let oc = ray.origin() - self.center;
         let a = ray.direction().dot(ray.direction());
         let b = 2.0 * oc.dot(ray.direction());
@@ -81,9 +80,13 @@ impl Hittable<f64> for Sphere<f64> {
             None
         } else {
             let t = (-b - discriminant.sqrt()) / (2.0 * a);
-            let hit_point = ray.point_at_parameter(t);
-            let normal = (hit_point - self.center()).unit();
-            Some(Hit::new(t, Ray::new(hit_point, normal)))
+            if min_t < t && t < max_t {
+                let hit_point = ray.point_at_parameter(t);
+                let normal = (hit_point - self.center()).unit();
+                Some(Hit::new(t, Ray::new(hit_point, normal)))
+            } else {
+                None
+            }
         }
     }
 }
