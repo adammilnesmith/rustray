@@ -11,7 +11,7 @@ use ray::Ray;
 use vec3::Vec3;
 
 fn color(ray: Ray<f64>, min_t: f64, max_t: f64, hittable: &Box<dyn Hittable<f64>>) -> Vec3<f64> {
-    let hit = hittable.normal_if_hit(ray, min_t, max_t);
+    let hit = hittable.hit(ray, min_t, max_t);
     if hit.is_some() {
         let normal = hit.unwrap().normal();
         let target = normal.origin() + normal.direction() + random_in_unit_sphere();
