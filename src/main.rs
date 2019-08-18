@@ -1,44 +1,50 @@
 mod camera;
 mod hittable;
+mod material;
 mod ray;
 mod vec3;
+
 extern crate rand;
+
 use camera::Camera;
 use hittable::{Hittable, Sphere, World};
+use material::{LightInteraction, Material};
 use rand::prelude::ThreadRng;
 use rand::Rng;
 use ray::Ray;
 use vec3::Vec3;
 
-fn color(ray: Ray<f64>, min_t: f64, max_t: f64, hittable: &Box<dyn Hittable<f64>>) -> Vec3<f64> {
-    let hit = hittable.hit(ray, min_t, max_t);
-    if hit.is_some() {
-        let normal = hit.unwrap().normal();
-        let target = normal.origin() + normal.direction() + random_in_unit_sphere();
-        0.5 * color(
-            Ray::new(normal.origin(), target - normal.origin()),
-            0.0001,
-            std::f64::MAX,
-            hittable,
-        )
-    //TODO: decide how to toggle normals rather than commenting this out
-    //0.5 * normal.direction().map(|i: f64| -> f64 { i + 1.0 })
-    } else {
-        sky_color(ray)
-    }
-}
-
-fn random_in_unit_sphere() -> Vec3<f64> {
-    let mut rng: ThreadRng = rand::thread_rng();
-    let mut p: Vec3<f64>;
-    loop {
-        p = 2.0 * Vec3::new(rng.gen::<f64>(), rng.gen::<f64>(), rng.gen::<f64>())
-            - Vec3::new(1f64, 1f64, 1f64);
-        if p.squared_length() < 1.0 {
-            break;
-        }
-    }
-    p
+fn color(
+    ray: Ray<f64>,
+    hittable: &Box<dyn Hittable<f64>>,
+    min_t: f64,
+    max_t: f64,
+    max_depth: u32,
+) -> Vec3<f64> {
+    hittable.hit(ray, min_t, max_t).map_or_else(
+        || sky_color(ray),
+        |hit| {
+            let interaction: LightInteraction<f64> = if max_depth <= 0 {
+                LightInteraction::new(Vec3::new(0.0, 0.0, 0.0), vec![])
+            } else {
+                hit.material().interact(ray, &hit.normal())
+            };
+            interaction
+                .scattered_rays()
+                .iter()
+                .map(|scattered_ray| {
+                    scattered_ray.attenuation()
+                        * color(
+                            scattered_ray.ray(),
+                            hittable,
+                            0.0001,
+                            std::f64::MAX,
+                            max_depth - 1,
+                        )
+                })
+                .fold(interaction.directly_emitted(), |a, b| a + b)
+        },
+    )
 }
 
 fn sky_color(ray: Ray<f64>) -> Vec3<f64> {
@@ -78,9 +84,22 @@ fn main() {
         Vec3::new(0.0, 2.0, 0.0),
     );
 
+    let normals = Material::Normal {};
+    let red_matte = Material::Lambertian {
+        albedo: Vec3::new(0.8, 0.3, 0.3),
+    };
+    let green_matte = Material::Lambertian {
+        albedo: Vec3::new(0.3, 0.8, 0.3),
+    };
+
     let world: Box<Hittable<f64>> = Box::new(World::new(vec![
-        Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)),
-        Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)),
+        Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.5), 0.5, normals)),
+        Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.5), 0.5, red_matte)),
+        Box::new(Sphere::new(
+            Vec3::new(0.0, -100.5, -1.0),
+            100.0,
+            green_matte,
+        )),
     ]));
 
     let get_pixel_location: fn(u32, u32) -> f64 = match samples {
@@ -91,8 +110,8 @@ fn main() {
     for j in (0..ny).rev() {
         for i in 0..nx {
             let average_colour: Vec3<f64> = (0..samples)
-                .map(|sample| camera.get_ray(get_pixel_location(i, nx), get_pixel_location(j, ny)))
-                .map(|ray| color(ray, 0.0001, std::f64::MAX, &world))
+                .map(|_sample| camera.get_ray(get_pixel_location(i, nx), get_pixel_location(j, ny)))
+                .map(|ray| color(ray, &world, 0.0001, std::f64::MAX, 50))
                 .fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
                 / f64::from(samples);
 
