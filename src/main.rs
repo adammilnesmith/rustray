@@ -91,8 +91,12 @@ fn main() {
     let green_matte = Material::Lambertian {
         albedo: Vec3::new(0.3, 0.8, 0.3),
     };
+    let blue_metal = Material::Metal {
+        albedo: Vec3::new(0.3, 0.3, 0.8),
+    };
 
     let world: Box<Hittable<f64>> = Box::new(World::new(vec![
+        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.5), 0.5, blue_metal)),
         Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.5), 0.5, normals)),
         Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.5), 0.5, red_matte)),
         Box::new(Sphere::new(

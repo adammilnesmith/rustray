@@ -16,13 +16,13 @@ where
     }
 
     #[inline]
-    pub fn origin(self) -> Vec3<T> {
-        self.origin
+    pub fn origin(&self) -> &Vec3<T> {
+        &self.origin
     }
 
     #[inline]
-    pub fn direction(self) -> Vec3<T> {
-        self.direction
+    pub fn direction(&self) -> &Vec3<T> {
+        &self.direction
     }
 
     #[inline]

@@ -60,6 +60,7 @@ impl ScatteredRay<f64> {
 pub enum Material<T> {
     Normal {},
     Lambertian { albedo: Vec3<T> },
+    Metal { albedo: Vec3<T> },
 }
 
 impl Material<f64> {
@@ -70,17 +71,40 @@ impl Material<f64> {
                 vec![],
             ),
             Material::Lambertian { albedo } => interact_with_lambertian(hit_normal, albedo),
+            Material::Metal { albedo } => interact_with_metal(ray, hit_normal, albedo),
         }
     }
 }
 
 fn interact_with_lambertian(hit_normal: &Ray<f64>, albedo: &Vec3<f64>) -> LightInteraction<f64> {
-    let target = hit_normal.origin() + hit_normal.direction() + random_in_unit_sphere();
+    let target = *hit_normal.origin() + *hit_normal.direction() + random_in_unit_sphere();
     let scattered_rays = vec![ScatteredRay::new(
-        Ray::new(hit_normal.origin(), target - hit_normal.origin()),
+        Ray::new(*hit_normal.origin(), target - *hit_normal.origin()),
         *albedo,
     )];
     LightInteraction::new(Vec3::new(0.0, 0.0, 0.0), scattered_rays)
+}
+
+fn interact_with_metal(
+    ray: Ray<f64>,
+    hit_normal: &Ray<f64>,
+    albedo: &Vec3<f64>,
+) -> LightInteraction<f64> {
+    let reflected = reflect(*ray.direction(), hit_normal.direction());
+
+    let scattered_rays = vec![ScatteredRay::new(
+        Ray::new(*hit_normal.origin(), reflected),
+        *albedo,
+    )]
+    .iter()
+    .filter(|scattered_ray| (*scattered_ray.ray().direction()).dot(*hit_normal.direction()) > 0.0)
+    .map(|scattered_ray| *scattered_ray)
+    .collect();
+    LightInteraction::new(Vec3::new(0.0, 0.0, 0.0), scattered_rays)
+}
+
+fn reflect(inbound: Vec3<f64>, normal: &Vec3<f64>) -> Vec3<f64> {
+    inbound - 2.0 * inbound.dot(*normal) * *normal
 }
 
 fn random_in_unit_sphere() -> Vec3<f64> {
