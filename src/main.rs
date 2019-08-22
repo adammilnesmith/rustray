@@ -85,17 +85,33 @@ fn main() {
 
     let world = create_world();
 
+    let canvas = Canvas::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0));
+
+    draw_on_canvas(&canvas, camera, &world, samples);
+
+    output_ppm(canvas)
+}
+
+fn draw_on_canvas(
+    canvas: &Canvas<Vec3<f64>>,
+    camera: Camera<f64>,
+    world: &Box<Hittable<f64>>,
+    samples: i32,
+) {
     let get_pixel_location: fn(usize, usize) -> f64 = match samples {
         1 => get_pixel,
         _ => get_pixel_with_randomness,
     };
 
-    let canvas = Canvas::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0));
-
-    for j in (0..ny).rev() {
-        for i in 0..nx {
+    for j in (0..canvas.y_size()).rev() {
+        for i in 0..canvas.x_size() {
             let average_colour: Vec3<f64> = (0..samples)
-                .map(|_| camera.get_ray(get_pixel_location(i, nx), get_pixel_location(j, ny)))
+                .map(|_| {
+                    camera.get_ray(
+                        get_pixel_location(i, canvas.x_size()),
+                        get_pixel_location(j, canvas.y_size()),
+                    )
+                })
                 .map(|ray| color(ray, &world, 0.0001, std::f64::MAX, 50))
                 .fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
                 / f64::from(samples);
@@ -103,8 +119,6 @@ fn main() {
             canvas.update_pixel(i, j, |_| average_colour);
         }
     }
-
-    output_ppm(canvas)
 }
 
 fn create_world() -> Box<Hittable<f64>> {
