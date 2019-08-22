@@ -74,7 +74,7 @@ fn get_pixel(i: usize, nx: usize) -> f64 {
 fn main() {
     let nx = 800usize;
     let ny = 400usize;
-    let samples = 1;
+    let samples = 9;
 
     let camera: Camera<f64> = Camera::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -83,37 +83,7 @@ fn main() {
         Vec3::new(0.0, 2.0, 0.0),
     );
 
-    let normals = Material::Normal {};
-    let red_matte = Material::Lambertian {
-        albedo: Vec3::new(0.8, 0.3, 0.3),
-    };
-    let green_matte = Material::Lambertian {
-        albedo: Vec3::new(0.3, 0.8, 0.3),
-    };
-    let blue_fuzzy_metal = Material::Metal {
-        albedo: Vec3::new(0.3, 0.3, 0.5),
-        fuzz: 0.8,
-    };
-    let shiny_metal = Material::Metal {
-        albedo: Vec3::new(0.8, 0.8, 0.8),
-        fuzz: 0.005,
-    };
-
-    let world: Box<Hittable<f64>> = Box::new(World::new(vec![
-        Box::new(Sphere::new(
-            Vec3::new(-1.0, 0.0, -1.5),
-            0.5,
-            blue_fuzzy_metal,
-        )),
-        Box::new(Sphere::new(Vec3::new(0.0, 2.0, -3.5), 1.5, shiny_metal)),
-        Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.5), 0.5, normals)),
-        Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.5), 0.5, red_matte)),
-        Box::new(Sphere::new(
-            Vec3::new(0.0, -100.5, -1.0),
-            100.0,
-            green_matte,
-        )),
-    ]));
+    let world = create_world();
 
     let get_pixel_location: fn(usize, usize) -> f64 = match samples {
         1 => get_pixel,
@@ -135,6 +105,40 @@ fn main() {
     }
 
     output_ppm(canvas)
+}
+
+fn create_world() -> Box<Hittable<f64>> {
+    let normals = Material::Normal {};
+    let red_matte = Material::Lambertian {
+        albedo: Vec3::new(0.8, 0.3, 0.3),
+    };
+    let green_matte = Material::Lambertian {
+        albedo: Vec3::new(0.3, 0.8, 0.3),
+    };
+    let blue_fuzzy_metal = Material::Metal {
+        albedo: Vec3::new(0.3, 0.3, 0.5),
+        fuzz: 0.8,
+    };
+    let shiny_metal = Material::Metal {
+        albedo: Vec3::new(0.8, 0.8, 0.8),
+        fuzz: 0.005,
+    };
+    let world: Box<Hittable<f64>> = Box::new(World::new(vec![
+        Box::new(Sphere::new(
+            Vec3::new(-1.0, 0.0, -1.5),
+            0.5,
+            blue_fuzzy_metal,
+        )),
+        Box::new(Sphere::new(Vec3::new(0.0, 2.0, -3.5), 1.5, shiny_metal)),
+        Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.5), 0.5, normals)),
+        Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.5), 0.5, red_matte)),
+        Box::new(Sphere::new(
+            Vec3::new(0.0, -100.5, -1.0),
+            100.0,
+            green_matte,
+        )),
+    ]));
+    world
 }
 
 fn output_ppm(canvas: Canvas<Vec3<f64>>) -> () {
