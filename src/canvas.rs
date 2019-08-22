@@ -41,6 +41,14 @@ where
         )
     }
 
+    pub fn x_size(&self) -> usize {
+        self.x_size
+    }
+
+    pub fn y_size(&self) -> usize {
+        self.y_size
+    }
+
     pub fn read_pixel(&self, x: usize, y: usize) -> T {
         self.canvas
             .get(to_index(x, y, self.x_size))

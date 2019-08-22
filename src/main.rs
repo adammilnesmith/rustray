@@ -74,7 +74,7 @@ fn get_pixel(i: usize, nx: usize) -> f64 {
 fn main() {
     let nx = 800usize;
     let ny = 400usize;
-    let samples = 9;
+    let samples = 1;
 
     let camera: Camera<f64> = Camera::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -134,11 +134,15 @@ fn main() {
         }
     }
 
+    output_ppm(canvas)
+}
+
+fn output_ppm(canvas: Canvas<Vec3<f64>>) -> () {
     println!("P3");
-    println!("{} {}", nx, ny);
+    println!("{} {}", canvas.x_size(), canvas.y_size());
     println!("255");
-    for j in (0..ny).rev() {
-        for i in 0..nx {
+    for j in (0..canvas.y_size()).rev() {
+        for i in 0..canvas.x_size() {
             let pixel_colour: Vec3<f64> = canvas.read_pixel(i, j).map(f64::sqrt) * 255.99;
             println!(
                 "{} {} {}",
