@@ -1,4 +1,5 @@
 mod camera;
+mod canvas;
 mod hittable;
 mod material;
 mod ray;
@@ -7,6 +8,7 @@ mod vec3;
 extern crate rand;
 
 use camera::Camera;
+use canvas::Canvas;
 use hittable::{Hittable, Sphere, World};
 use material::{LightInteraction, Material};
 use rand::prelude::ThreadRng;
@@ -59,23 +61,20 @@ fn interpolate(first: Vec3<f64>, second: Vec3<f64>, factor: f64) -> Vec3<f64> {
 }
 
 #[inline]
-fn get_pixel_with_randomness(i: u32, nx: u32) -> f64 {
+fn get_pixel_with_randomness(i: usize, nx: usize) -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    (f64::from(i) + rng.gen::<f64>()) / f64::from(nx)
+    (i as f64 + rng.gen::<f64>()) / nx as f64
 }
 
 #[inline]
-fn get_pixel(i: u32, nx: u32) -> f64 {
-    f64::from(i) / f64::from(nx)
+fn get_pixel(i: usize, nx: usize) -> f64 {
+    i as f64 / nx as f64
 }
 
 fn main() {
-    let nx = 800u32;
-    let ny = 400u32;
+    let nx = 800usize;
+    let ny = 400usize;
     let samples = 9;
-    println!("P3");
-    println!("{} {}", nx, ny);
-    println!("255");
 
     let camera: Camera<f64> = Camera::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -116,20 +115,31 @@ fn main() {
         )),
     ]));
 
-    let get_pixel_location: fn(u32, u32) -> f64 = match samples {
+    let get_pixel_location: fn(usize, usize) -> f64 = match samples {
         1 => get_pixel,
         _ => get_pixel_with_randomness,
     };
 
+    let canvas = Canvas::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0));
+
     for j in (0..ny).rev() {
         for i in 0..nx {
             let average_colour: Vec3<f64> = (0..samples)
-                .map(|_sample| camera.get_ray(get_pixel_location(i, nx), get_pixel_location(j, ny)))
+                .map(|_| camera.get_ray(get_pixel_location(i, nx), get_pixel_location(j, ny)))
                 .map(|ray| color(ray, &world, 0.0001, std::f64::MAX, 50))
                 .fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
                 / f64::from(samples);
 
-            let pixel_colour: Vec3<f64> = average_colour.map(f64::sqrt) * 255.99;
+            canvas.update_pixel(i, j, |_| average_colour);
+        }
+    }
+
+    println!("P3");
+    println!("{} {}", nx, ny);
+    println!("255");
+    for j in (0..ny).rev() {
+        for i in 0..nx {
+            let pixel_colour: Vec3<f64> = canvas.read_pixel(i, j).map(f64::sqrt) * 255.99;
             println!(
                 "{} {} {}",
                 pixel_colour.r() as u32,
