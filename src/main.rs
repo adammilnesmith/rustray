@@ -199,20 +199,23 @@ fn draw_on_canvas(
         _ => get_pixel_with_randomness,
     };
 
-    for j in (0..canvas.y_size()).rev() {
-        for i in 0..canvas.x_size() {
-            let average_colour: Vec3<f64> = (0..samples)
-                .map(|_| {
-                    camera.get_ray(
-                        get_pixel_location(i, canvas.x_size()),
-                        get_pixel_location(j, canvas.y_size()),
-                    )
-                })
-                .map(|ray| color(ray, &world, 0.0001, std::f64::MAX, 50))
-                .fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
-                / f64::from(samples);
-
-            canvas.update_pixel(i, j, |_| average_colour);
+    for sample in 0..samples {
+        for j in (0..canvas.y_size()).rev() {
+            for i in 0..canvas.x_size() {
+                let ray = camera.get_ray(
+                    get_pixel_location(i, canvas.x_size()),
+                    get_pixel_location(j, canvas.y_size()),
+                );
+                let pixel_colour = color(ray, &world, 0.0001, std::f64::MAX, 50);
+                match sample {
+                    0 => canvas.update_pixel(i, j, |_| pixel_colour),
+                    _ => canvas.update_pixel(i, j, |old_avg| {
+                        let old_sum = old_avg * f64::from(sample - 1);
+                        let new_sum = old_sum + pixel_colour;
+                        new_sum / f64::from(sample)
+                    }),
+                };
+            }
         }
     }
 }
