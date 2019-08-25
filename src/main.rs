@@ -5,15 +5,24 @@ mod material;
 mod ray;
 mod vec3;
 
+extern crate image;
+extern crate piston_window;
 extern crate rand;
 
 use camera::Camera;
 use canvas::Canvas;
 use hittable::{Hittable, Sphere, World};
+use image::{ImageBuffer, Rgba};
 use material::{LightInteraction, Material};
+use piston_window::*;
 use rand::prelude::ThreadRng;
 use rand::Rng;
 use ray::Ray;
+use std::cmp::{max, min};
+use std::ops::Deref;
+use std::sync::Arc;
+use std::thread;
+use std::thread::JoinHandle;
 use vec3::Vec3;
 
 fn color(
@@ -74,7 +83,10 @@ fn get_pixel(i: usize, nx: usize) -> f64 {
 fn main() {
     let nx = 800usize;
     let ny = 400usize;
-    let samples = 9;
+
+    let canvas = Arc::new(Canvas::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0)));
+
+    let window_thread = run_window_thread(Arc::clone(&canvas));
 
     let camera: Camera<f64> = Camera::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -85,11 +97,95 @@ fn main() {
 
     let world = create_world();
 
-    let canvas = Canvas::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0));
-
+    let samples = 9;
     draw_on_canvas(&canvas, camera, &world, samples);
+    output_ppm(canvas);
+    window_thread.join().unwrap();
+}
 
-    output_ppm(canvas)
+fn run_window_thread(image_data: Arc<Canvas<Vec3<f64>>>) -> JoinHandle<()> {
+    thread::spawn(move || {
+        let width = image_data.x_size() as u32;
+        let height = image_data.y_size() as u32;
+        let mut window: PistonWindow = WindowSettings::new("RustRay!", [width, height])
+            .exit_on_esc(true)
+            .build()
+            .unwrap();
+
+        let mut texture_context = TextureContext {
+            factory: window.factory.clone(),
+            encoder: window.factory.create_command_buffer().into(),
+        };
+
+        let initial_empty = ImageBuffer::new(width, height);
+
+        let mut texture: G2dTexture = Texture::from_image(
+            &mut texture_context,
+            &initial_empty,
+            &TextureSettings::new(),
+        )
+        .unwrap();
+
+        while let Some(event) = window.next() {
+            if let Some(_) = event.render_args() {
+                let pixels: Vec<Vec3<f64>> = image_data.deref().into();
+                let max_intensity = max_intensity_from(&pixels);
+                let mut sub_pixels: Vec<u8> = pixels
+                    .iter()
+                    .map(|p| {
+                        vec![
+                            255u8,
+                            f64_to_u8(gamma_correction(normalise(p.b(), max_intensity))),
+                            f64_to_u8(gamma_correction(normalise(p.g(), max_intensity))),
+                            f64_to_u8(gamma_correction(normalise(p.r(), max_intensity))),
+                        ]
+                    })
+                    .flatten()
+                    .collect();
+                sub_pixels.reverse(); //TODO fix this hack that was to flip the image vertically but also mirrored it horizontally
+                let buffer: ImageBuffer<Rgba<u8>, Vec<u8>> =
+                    image::ImageBuffer::from_raw(width, height, sub_pixels).unwrap();
+                texture.update(&mut texture_context, &buffer).unwrap();
+
+                window.draw_2d(&event, |context, graphics, device| {
+                    texture_context.encoder.flush(device);
+                    clear([1.0; 4], graphics);
+                    image(&texture, context.transform, graphics);
+                });
+            }
+        }
+    })
+}
+
+fn max_intensity_from(pixels: &Vec<Vec3<f64>>) -> f64 {
+    pixels.iter().fold(1.0, |max_so_far, colour| {
+        let mut max = max_so_far;
+        if colour.r() > max {
+            max = colour.r()
+        };
+        if colour.g() > max {
+            max = colour.g()
+        };
+        if colour.b() > max {
+            max = colour.b()
+        };
+        max
+    })
+}
+
+#[inline]
+fn normalise(value: f64, max_intensity: f64) -> f64 {
+    value / max_intensity
+}
+
+#[inline]
+fn gamma_correction(value: f64) -> f64 {
+    value.sqrt()
+}
+
+#[inline]
+fn f64_to_u8(value: f64) -> u8 {
+    (value * 255.0) as u8
 }
 
 fn draw_on_canvas(
@@ -131,7 +227,7 @@ fn create_world() -> Box<Hittable<f64>> {
     };
     let blue_fuzzy_metal = Material::Metal {
         albedo: Vec3::new(0.3, 0.3, 0.5),
-        fuzz: 0.8,
+        fuzz: 0.5,
     };
     let shiny_metal = Material::Metal {
         albedo: Vec3::new(0.8, 0.8, 0.8),
@@ -147,27 +243,27 @@ fn create_world() -> Box<Hittable<f64>> {
         Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.5), 0.5, normals)),
         Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.5), 0.5, red_matte)),
         Box::new(Sphere::new(
-            Vec3::new(0.0, -100.5, -1.0),
-            100.0,
+            Vec3::new(0.0, -200.5, -1.0),
+            200.0,
             green_matte,
         )),
     ]));
     world
 }
 
-fn output_ppm(canvas: Canvas<Vec3<f64>>) -> () {
+fn output_ppm(image_data: Arc<Canvas<Vec3<f64>>>) -> () {
     println!("P3");
-    println!("{} {}", canvas.x_size(), canvas.y_size());
+    println!("{} {}", image_data.x_size(), image_data.y_size());
     println!("255");
-    for j in (0..canvas.y_size()).rev() {
-        for i in 0..canvas.x_size() {
-            let pixel_colour: Vec3<f64> = canvas.read_pixel(i, j).map(f64::sqrt) * 255.99;
-            println!(
-                "{} {} {}",
-                pixel_colour.r() as u32,
-                pixel_colour.g() as u32,
-                pixel_colour.b() as u32
-            );
-        }
-    }
+    let mut pixels: Vec<Vec3<f64>> = image_data.deref().into();
+    let max_intensity = max_intensity_from(&pixels);
+    pixels.reverse(); //TODO: same issue to fix here
+    pixels.iter().for_each(|p| {
+        println!(
+            "{} {} {}",
+            f64_to_u8(gamma_correction(normalise(p.r(), max_intensity))),
+            f64_to_u8(gamma_correction(normalise(p.g(), max_intensity))),
+            f64_to_u8(gamma_correction(normalise(p.b(), max_intensity))),
+        );
+    });
 }

@@ -67,7 +67,10 @@ impl Material<f64> {
     pub fn interact(&self, ray: Ray<f64>, hit_normal: &Ray<f64>) -> LightInteraction<f64> {
         match self {
             Material::Normal {} => LightInteraction::new(
-                hit_normal.direction().map(|i: f64| -> f64 { i + 1.0 }),
+                hit_normal.direction().map(|i: f64| -> f64 {
+                    (i + 1.0) /* *100.0*/
+ /* / 2.0*/
+                }),
                 vec![],
             ),
             Material::Lambertian { albedo } => interact_with_lambertian(hit_normal, albedo),

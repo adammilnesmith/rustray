@@ -63,7 +63,7 @@ impl Hittable<f64> for World<f64> {
         self.objects()
             .iter()
             .map(|hittable| hittable.hit(ray, min_t, max_t))
-            .flat_map(|option| option.into_iter())
+            .flatten()
             .min_by(|hit_a, hit_b| hit_a.t().partial_cmp(&hit_b.t()).unwrap())
     }
 }
