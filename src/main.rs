@@ -81,8 +81,8 @@ fn get_pixel(i: usize, nx: usize) -> f64 {
 }
 
 fn main() {
-    let nx = 800usize;
-    let ny = 400usize;
+    let nx = 1280usize;
+    let ny = 720usize;
 
     let canvas = Arc::new(Canvas::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0)));
 
@@ -98,9 +98,9 @@ fn main() {
     let world = create_world();
 
     let samples = 9;
-    draw_on_canvas(&canvas, camera, &world, samples);
+    draw_on_canvas(&canvas, &camera, &world, samples);
     output_ppm(canvas);
-    window_thread.join().unwrap();
+    //window_thread.join().unwrap();
 }
 
 fn run_window_thread(image_data: Arc<Canvas<Vec3<f64>>>) -> JoinHandle<()> {
@@ -190,11 +190,11 @@ fn f64_to_u8(value: f64) -> u8 {
 
 fn draw_on_canvas(
     canvas: &Canvas<Vec3<f64>>,
-    camera: Camera<f64>,
+    camera: &Camera<f64>,
     world: &Box<Hittable<f64>>,
     samples: i32,
 ) {
-    let get_pixel_location: fn(usize, usize) -> f64 = match samples {
+    let pixel_location: fn(usize, usize) -> f64 = match samples {
         1 => get_pixel,
         _ => get_pixel_with_randomness,
     };
@@ -202,22 +202,43 @@ fn draw_on_canvas(
     for sample in 0..samples {
         for j in (0..canvas.y_size()).rev() {
             for i in 0..canvas.x_size() {
-                let ray = camera.get_ray(
-                    get_pixel_location(i, canvas.x_size()),
-                    get_pixel_location(j, canvas.y_size()),
-                );
-                let pixel_colour = color(ray, &world, 0.0001, std::f64::MAX, 50);
-                match sample {
-                    0 => canvas.update_pixel(i, j, |_| pixel_colour),
-                    _ => canvas.update_pixel(i, j, |old_avg| {
-                        let old_sum = old_avg * f64::from(sample - 1);
-                        let new_sum = old_sum + pixel_colour;
-                        new_sum / f64::from(sample)
-                    }),
-                };
+                if i % 2 == j % 2 {
+                    draw_on_canvas_for_pixel(canvas, camera, world, i, j, pixel_location, sample);
+                }
+            }
+        }
+        for j in (0..canvas.y_size()).rev() {
+            for i in 0..canvas.x_size() {
+                if i % 2 != j % 2 {
+                    draw_on_canvas_for_pixel(canvas, camera, world, i, j, pixel_location, sample);
+                }
             }
         }
     }
+}
+
+fn draw_on_canvas_for_pixel(
+    canvas: &Canvas<Vec3<f64>>,
+    camera: &Camera<f64>,
+    world: &Box<Hittable<f64>>,
+    i: usize,
+    j: usize,
+    pixel_location: fn(usize, usize) -> f64,
+    sample: i32,
+) {
+    let ray = camera.get_ray(
+        pixel_location(i, canvas.x_size()),
+        pixel_location(j, canvas.y_size()),
+    );
+    let pixel_colour = color(ray, &world, 0.0001, std::f64::MAX, 50);
+    match sample {
+        0 => canvas.update_pixel(i, j, |_| pixel_colour),
+        _ => canvas.update_pixel(i, j, |old_avg| {
+            let old_sum = old_avg * f64::from(sample - 1);
+            let new_sum = old_sum + pixel_colour;
+            new_sum / f64::from(sample)
+        }),
+    };
 }
 
 fn create_world() -> Box<Hittable<f64>> {
