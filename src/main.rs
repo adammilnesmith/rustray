@@ -1,29 +1,31 @@
+extern crate image;
+extern crate piston_window;
+extern crate rand;
+
+use std::cmp::{max, min};
+use std::ops::Deref;
+use std::sync::Arc;
+use std::thread;
+use std::thread::JoinHandle;
+
+use image::{ImageBuffer, Rgba};
+use piston_window::*;
+use rand::prelude::ThreadRng;
+use rand::Rng;
+
+use camera::Camera;
+use canvas::Canvas;
+use hittable::{Hittable, Sphere, World};
+use material::{LightInteraction, Material};
+use ray::Ray;
+use vec3::Vec3;
+
 mod camera;
 mod canvas;
 mod hittable;
 mod material;
 mod ray;
 mod vec3;
-
-extern crate image;
-extern crate piston_window;
-extern crate rand;
-
-use camera::Camera;
-use canvas::Canvas;
-use hittable::{Hittable, Sphere, World};
-use image::{ImageBuffer, Rgba};
-use material::{LightInteraction, Material};
-use piston_window::*;
-use rand::prelude::ThreadRng;
-use rand::Rng;
-use ray::Ray;
-use std::cmp::{max, min};
-use std::ops::Deref;
-use std::sync::Arc;
-use std::thread;
-use std::thread::JoinHandle;
-use vec3::Vec3;
 
 fn color(
     ray: Ray<f64>,

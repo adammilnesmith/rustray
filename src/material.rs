@@ -1,6 +1,8 @@
 extern crate rand;
+
 use rand::prelude::ThreadRng;
 use rand::Rng;
+
 use ray::Ray;
 use vec3::Vec3;
 
@@ -69,7 +71,7 @@ impl Material<f64> {
             Material::Normal {} => LightInteraction::new(
                 hit_normal.direction().map(|i: f64| -> f64 {
                     (i + 1.0) /* *100.0*/
- /* / 2.0*/
+                    /* / 2.0*/
                 }),
                 vec![],
             ),
