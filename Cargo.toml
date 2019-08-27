@@ -7,3 +7,4 @@ authors = ["adam <adam@milne-smith.co.uk>"]
 rand = "0.7.0"
 piston_window = "0.103.0"
 image = "0.22.1"
+find_folder = "0.3.0"
