@@ -239,8 +239,11 @@ fn draw_to_image_data(
                     );
                 }
             }
+            let number_of_rows_so_far = (1 + image_data.y_size() - j) as f64 / 2.0;
+            let proportion_of_sample = (number_of_rows_so_far) / (image_data.y_size() as f64);
+            let total_proportion = (f64::from(sample) + proportion_of_sample) / f64::from(samples);
+            image_data.update_complete(|_| total_proportion);
         }
-        image_data.update_complete(|_| (f64::from(sample) + 0.5) / f64::from(samples));
         for j in (0..image_data.y_size()).rev() {
             for i in 0..image_data.x_size() {
                 if i % 2 != j % 2 {
@@ -255,8 +258,11 @@ fn draw_to_image_data(
                     );
                 }
             }
+            let number_of_rows_so_far = (1 + image_data.y_size() - j) as f64 / 2.0;
+            let proportion_of_sample = 0.5 + (number_of_rows_so_far / (image_data.y_size() as f64));
+            let total_proportion = (f64::from(sample) + proportion_of_sample) / f64::from(samples);
+            image_data.update_complete(|_| total_proportion);
         }
-        image_data.update_complete(|_| (f64::from(sample) + 1.0) / f64::from(samples));
     }
 }
 
