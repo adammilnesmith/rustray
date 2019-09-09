@@ -1,9 +1,5 @@
 extern crate image;
 
-extern crate find_folder;
-extern crate piston_window;
-extern crate rand;
-
 use std::ops::Deref;
 use std::sync::Arc;
 use std::thread;

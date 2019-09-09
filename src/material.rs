@@ -1,3 +1,4 @@
+extern crate image;
 extern crate rand;
 
 use rand::prelude::ThreadRng;
