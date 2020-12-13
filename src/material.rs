@@ -64,24 +64,26 @@ pub enum Material<T> {
     Normal {},
     Lambertian { albedo: Vec3<T> },
     Metal { albedo: Vec3<T>, fuzz: T },
+    Dieletric { refractive_index: T },
 }
 
 impl Material<f64> {
     pub fn interact(&self, ray: Ray<f64>, hit_normal: &Ray<f64>) -> LightInteraction<f64> {
         match self {
             Material::Normal {} => LightInteraction::new(
-                hit_normal.direction().map(|i: f64| -> f64 {
-                    (i + 1.0) /* *100.0*/
-                    /* / 2.0*/
-                }),
+                hit_normal.direction().map(|i: f64| -> f64 { (i + 1.0) }),
                 vec![],
             ),
             Material::Lambertian { albedo } => interact_with_lambertian(hit_normal, albedo),
             Material::Metal { albedo, fuzz } => interact_with_metal(ray, hit_normal, albedo, fuzz),
+            Material::Dieletric { refractive_index } => {
+                interact_with_dielectric(ray, hit_normal, refractive_index)
+            }
         }
     }
 }
 
+#[inline]
 fn interact_with_lambertian(hit_normal: &Ray<f64>, albedo: &Vec3<f64>) -> LightInteraction<f64> {
     let target = *hit_normal.origin() + *hit_normal.direction() + random_in_unit_sphere();
     let scattered_rays = vec![ScatteredRay::new(
@@ -91,6 +93,7 @@ fn interact_with_lambertian(hit_normal: &Ray<f64>, albedo: &Vec3<f64>) -> LightI
     LightInteraction::new(Vec3::new(0.0, 0.0, 0.0), scattered_rays)
 }
 
+#[inline]
 fn interact_with_metal(
     ray: Ray<f64>,
     hit_normal: &Ray<f64>,
@@ -113,10 +116,71 @@ fn interact_with_metal(
     LightInteraction::new(Vec3::new(0.0, 0.0, 0.0), scattered_rays)
 }
 
+#[inline]
 fn reflect(inbound: Vec3<f64>, normal: &Vec3<f64>) -> Vec3<f64> {
     inbound - 2.0 * inbound.dot(*normal) * *normal
 }
 
+#[inline]
+fn interact_with_dielectric(
+    ray: Ray<f64>,
+    hit_normal: &Ray<f64>,
+    refractive_index: &f64,
+) -> LightInteraction<f64> {
+    let reflected = reflect(*ray.direction(), hit_normal.direction());
+    let inline_later = ray.direction().unit().dot(hit_normal.direction().unit());
+
+    let (outward_normal, ni_over_nt) = if inline_later > 0.0 {
+        /*eprintln!(
+            "{:?}.dot({:?}) = {}",
+            ray.direction().unit(),
+            hit_normal.direction().unit(),
+            inline_later
+        );*/
+        (-hit_normal.direction().unit(), *refractive_index)
+    } else {
+        /*eprintln!(
+            "{:?}.dot({:?}) = {}",
+            ray.direction().unit(),
+            hit_normal.direction().unit(),
+            inline_later
+        );*/
+        (hit_normal.direction().unit(), 1.0 / refractive_index)
+    };
+    /*eprintln!(
+        "hit_normal.direction(): {:?}\toutward_normal: {:?}\trefractive_index: {}\tni_over_nt: {}\n",
+        hit_normal.direction().unit(),
+        outward_normal,
+        refractive_index,
+        ni_over_nt
+    );*/
+    let scattered = refract(*ray.direction(), &outward_normal, ni_over_nt)
+        .or(Some(reflected))
+        .map(|ray_direction| {
+            ScatteredRay::new(
+                Ray::new(*hit_normal.origin(), ray_direction),
+                Vec3::new(1.0, 1.0, 1.0),
+            )
+        })
+        .iter()
+        .map(|scattered_ray| *scattered_ray)
+        .collect();
+
+    LightInteraction::new(Vec3::new(0.0, 0.0, 0.0), scattered)
+}
+
+#[inline]
+fn refract(inbound: Vec3<f64>, normal: &Vec3<f64>, ni_over_nt: f64) -> Option<Vec3<f64>> {
+    let dt = inbound.dot(*normal);
+    let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
+    if (discriminant > 0.0) {
+        Some(ni_over_nt * (inbound - *normal * dt) - inbound * discriminant.sqrt())
+    } else {
+        None
+    }
+}
+
+#[inline]
 fn random_in_unit_sphere() -> Vec3<f64> {
     let mut rng: ThreadRng = rand::thread_rng();
     let mut p: Vec3<f64>;
