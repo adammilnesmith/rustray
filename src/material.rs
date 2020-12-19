@@ -71,7 +71,7 @@ impl Material<f64> {
     pub fn interact(&self, ray: Ray<f64>, hit_normal: &Ray<f64>) -> LightInteraction<f64> {
         match self {
             Material::Normal {} => LightInteraction::new(
-                hit_normal.direction().map(|i: f64| -> f64 { (i + 1.0) }),
+                hit_normal.direction().map(|i: f64| -> f64 { i + 1.0 }),
                 vec![],
             ),
             Material::Lambertian { albedo } => interact_with_lambertian(hit_normal, albedo),
@@ -173,7 +173,7 @@ fn interact_with_dielectric(
 fn refract(inbound: Vec3<f64>, normal: &Vec3<f64>, ni_over_nt: f64) -> Option<Vec3<f64>> {
     let dt = inbound.dot(*normal);
     let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
-    if (discriminant > 0.0) {
+    if discriminant > 0.0 {
         Some(ni_over_nt * (inbound - *normal * dt) - inbound * discriminant.sqrt())
     } else {
         None

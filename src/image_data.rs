@@ -1,5 +1,4 @@
-use std::sync::{Arc, RwLock};
-use std::thread;
+use std::sync::RwLock;
 
 macro_rules! vec_no_clone {
     ( $val:expr; $n:expr ) => {{
@@ -121,6 +120,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
+    use std::thread;
 
     #[test]
     fn test_blank_canvas() {

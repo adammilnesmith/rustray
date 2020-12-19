@@ -1145,6 +1145,7 @@ dependencies = [
  "image",
  "piston_window",
  "rand",
+ "rayon",
 ]
 
 [[package]]

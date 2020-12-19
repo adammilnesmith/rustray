@@ -1,82 +1,72 @@
+extern crate rayon;
+
 use std::sync::Arc;
 
 use rand::prelude::ThreadRng;
 use rand::Rng;
+use rayon::prelude::*;
 
 use camera::Camera;
-use display::output_ppm;
-use display::run_window_thread;
-use hittable::{Hittable, Sphere, World};
+use hittable::Hittable;
 use image_data::ImageData;
-use material::{LightInteraction, Material};
+use material::LightInteraction;
 use ray::Ray;
 use vec3::Vec3;
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+struct WorkItem {
+    pub j: usize,
+    pub x_size: usize,
+    pub y_size: usize,
+    pub sample: i32,
+}
+
 pub fn draw_to_image_data(
-    image_data: &ImageData<Vec3<f64>>,
+    image_data: &Arc<ImageData<Vec3<f64>>>,
     camera: &Camera<f64>,
-    world: &Box<Hittable<f64>>,
+    world: &Arc<Box<dyn Hittable<f64>>>,
     samples: i32,
 ) {
-    let pixel_location: fn(usize, usize) -> f64 = match samples {
-        1 => get_pixel,
-        _ => get_pixel_with_randomness,
-    };
-
-    for sample in 0..samples {
-        for j in (0..image_data.y_size()).rev() {
-            for i in 0..image_data.x_size() {
-                if i % 2 == j % 2 {
-                    draw_to_image_data_for_pixel(
-                        image_data,
-                        camera,
-                        world,
-                        i,
-                        j,
-                        pixel_location,
-                        sample,
-                    );
-                }
-            }
-            let number_of_rows_so_far = (1 + image_data.y_size() - j) as f64 / 2.0;
-            let proportion_of_sample = (number_of_rows_so_far) / (image_data.y_size() as f64);
-            let total_proportion = (f64::from(sample) + proportion_of_sample) / f64::from(samples);
-            image_data.update_complete(|_| total_proportion);
+    let work_items: Vec<WorkItem> = (0..samples)
+        .flat_map(|sample| {
+            (0..image_data.y_size())
+                .rev()
+                .map(|j| WorkItem {
+                    j,
+                    x_size: image_data.x_size,
+                    y_size: image_data.y_size,
+                    sample,
+                })
+                .collect::<Vec<WorkItem>>()
+        })
+        .collect();
+    let work_item_fraction_of_total: f64 = 1.0 / work_items.len() as f64;
+    work_items.par_iter().for_each(|work_item: &WorkItem| {
+        for i in 0..image_data.x_size() {
+            draw_to_image_data_for_pixel(
+                image_data,
+                camera,
+                world,
+                i,
+                work_item.j,
+                work_item.sample,
+            );
         }
-        for j in (0..image_data.y_size()).rev() {
-            for i in 0..image_data.x_size() {
-                if i % 2 != j % 2 {
-                    draw_to_image_data_for_pixel(
-                        image_data,
-                        camera,
-                        world,
-                        i,
-                        j,
-                        pixel_location,
-                        sample,
-                    );
-                }
-            }
-            let number_of_rows_so_far = (1 + image_data.y_size() - j) as f64 / 2.0;
-            let proportion_of_sample = 0.5 + (number_of_rows_so_far / (image_data.y_size() as f64));
-            let total_proportion = (f64::from(sample) + proportion_of_sample) / f64::from(samples);
-            image_data.update_complete(|_| total_proportion);
-        }
-    }
+        image_data.update_complete(|prev| prev + work_item_fraction_of_total);
+    });
 }
 
 fn draw_to_image_data_for_pixel(
     image_data: &ImageData<Vec3<f64>>,
     camera: &Camera<f64>,
-    world: &Box<Hittable<f64>>,
+    world: &Box<dyn Hittable<f64>>,
     i: usize,
     j: usize,
-    pixel_location: fn(usize, usize) -> f64,
     sample: i32,
 ) {
     let ray = camera.get_ray(
-        pixel_location(i, image_data.x_size()),
-        pixel_location(j, image_data.y_size()),
+        get_pixel_with_randomness(i, image_data.x_size()),
+        get_pixel_with_randomness(j, image_data.y_size()),
     );
     let pixel_colour = color(ray, &world, 0.0001, std::f64::MAX, 50);
     match sample {
@@ -140,6 +130,7 @@ fn get_pixel_with_randomness(i: usize, nx: usize) -> f64 {
 }
 
 #[inline]
+#[allow(dead_code)]
 fn get_pixel(i: usize, nx: usize) -> f64 {
     i as f64 / nx as f64
 }

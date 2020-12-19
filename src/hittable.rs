@@ -2,7 +2,7 @@ use material::Material;
 use ray::Ray;
 use vec3::{NumWithVectorOps, Vec3, VectorWithOps};
 
-pub trait Hittable<T> {
+pub trait Hittable<T>: Send + Sync {
     fn hit(&self, ray: Ray<T>, min_t: T, max_t: T) -> Option<Hit<T>>;
 }
 
@@ -48,12 +48,12 @@ pub struct World<T> {
 
 impl World<f64> {
     #[inline]
-    pub fn new(objects: Vec<Box<Hittable<f64>>>) -> World<f64> {
+    pub fn new(objects: Vec<Box<dyn Hittable<f64>>>) -> World<f64> {
         World { objects }
     }
 
     #[inline]
-    pub fn objects(&self) -> &Vec<Box<Hittable<f64>>> {
+    pub fn objects(&self) -> &Vec<Box<dyn Hittable<f64>>> {
         &self.objects
     }
 }
@@ -90,6 +90,7 @@ impl Sphere<f64> {
     }
 
     #[inline]
+    #[allow(dead_code)]
     pub fn radius(self) -> f64 {
         self.radius
     }

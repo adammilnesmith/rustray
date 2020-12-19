@@ -28,6 +28,7 @@ where
         }
     }
 
+    #[allow(dead_code)]
     pub fn location(self) -> Vec3<T> {
         self.location
     }

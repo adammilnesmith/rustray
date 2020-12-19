@@ -1,8 +1,8 @@
-extern crate image;
-
 extern crate find_folder;
+extern crate image;
 extern crate piston_window;
 extern crate rand;
+extern crate rayon;
 
 use std::sync::Arc;
 
@@ -28,9 +28,10 @@ fn main() {
     let nx = 1920usize;
     let ny = 1080usize;
 
-    let image_data = Arc::new(ImageData::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0)));
+    let image_data: Arc<ImageData<Vec3<f64>>> =
+        Arc::new(ImageData::new_blank(nx, ny, Vec3::new(0.0, 0.0, 0.0)));
 
-    let window_thread = run_window_thread(Arc::clone(&image_data));
+    let _window_thread = run_window_thread(Arc::clone(&image_data));
 
     let camera: Camera<f64> = Camera::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -39,7 +40,7 @@ fn main() {
         Vec3::new(0.0, 2.0, 0.0),
     );
 
-    let world = create_world();
+    let world = Arc::new(create_world());
 
     let samples = 64;
     draw_to_image_data(&image_data, &camera, &world, samples);
@@ -47,26 +48,26 @@ fn main() {
     //window_thread.join().unwrap();
 }
 
-fn create_world() -> Box<Hittable<f64>> {
+fn create_world() -> Box<dyn Hittable<f64>> {
     let normals = Material::Normal {};
     let red_matte = Material::Lambertian {
-        albedo: Vec3::new(0.8, 0.3, 0.3),
+        albedo: Vec3::new(0.8_f64, 0.3_f64, 0.3_f64),
     };
     let green_matte = Material::Lambertian {
-        albedo: Vec3::new(0.3, 0.8, 0.3),
+        albedo: Vec3::new(0.3_f64, 0.8_f64, 0.3_f64),
     };
     let blue_fuzzy_metal = Material::Metal {
-        albedo: Vec3::new(0.3, 0.3, 0.5),
+        albedo: Vec3::new(0.3_f64, 0.3_f64, 0.5_f64),
         fuzz: 0.5,
     };
     let shiny_metal = Material::Metal {
-        albedo: Vec3::new(0.8, 0.8, 0.8),
+        albedo: Vec3::new(0.8_f64, 0.8_f64, 0.8_f64),
         fuzz: 0.005,
     };
     let glass = Material::Dieletric {
         refractive_index: 1.5,
     };
-    let world: Box<Hittable<f64>> = Box::new(World::new(vec![
+    let world: Box<dyn Hittable<f64>> = Box::new(World::new(vec![
         Box::new(Sphere::new(
             Vec3::new(-1.0, 0.0, -1.5),
             0.5,
