@@ -105,13 +105,13 @@ impl Hittable<f64> for Sphere<f64> {
     fn hit(&self, ray: Ray<f64>, min_t: f64, max_t: f64) -> Option<Hit<f64>> {
         let oc = *ray.origin() - self.center;
         let a = ray.direction().dot(*ray.direction());
-        let b = 2.0 * oc.dot(*ray.direction());
+        let b = oc.dot(*ray.direction());
         let c = oc.dot(oc) - self.radius * self.radius;
-        let discriminant = b * b - 4.0 * a * c;
+        let discriminant = b * b - a * c;
         if discriminant < 0.0 {
             None
         } else {
-            let t = (-b - discriminant.sqrt()) / (2.0 * a);
+            let t = (-b - discriminant.sqrt()) / a;
             if min_t < t && t < max_t {
                 let hit_point = ray.point_at_parameter(t);
                 let normal = (hit_point - *self.center()).unit();
