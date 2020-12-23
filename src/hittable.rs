@@ -117,7 +117,14 @@ impl Hittable<f64> for Sphere<f64> {
                 let normal = (hit_point - *self.center()).unit();
                 Some(Hit::new(t, Ray::new(hit_point, normal), *self.material()))
             } else {
-                None
+                let t = (-b + discriminant.sqrt()) / a;
+                if min_t < t && t < max_t {
+                    let hit_point = ray.point_at_parameter(t);
+                    let normal = (hit_point - *self.center()).unit();
+                    Some(Hit::new(t, Ray::new(hit_point, normal), *self.material()))
+                } else {
+                    None
+                }
             }
         }
     }

@@ -174,7 +174,7 @@ fn refract(inbound: Vec3<f64>, normal: &Vec3<f64>, ni_over_nt: f64) -> Option<Ve
     let dt = inbound.dot(*normal);
     let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
     if discriminant > 0.0 {
-        Some(ni_over_nt * (inbound - *normal * dt) - inbound * discriminant.sqrt())
+        Some(ni_over_nt * (inbound - *normal * dt) - *normal * discriminant.sqrt())
     } else {
         None
     }

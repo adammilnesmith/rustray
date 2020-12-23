@@ -75,8 +75,8 @@ fn create_world() -> Box<dyn Hittable<f64>> {
         )),
         Box::new(Sphere::new(Vec3::new(0.0, 2.0, -3.5), 1.5, shiny_metal)),
         Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.5), 0.5, normals)),
-        Box::new(Sphere::new(Vec3::new(0.5, -0.25, -1.0), 0.25, glass)),
-        Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.5), 0.5, red_matte)),
+        Box::new(Sphere::new(Vec3::new(0.5, -0.25, -1.0), 0.25, red_matte)),
+        Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.5), 0.5, glass)),
         Box::new(Sphere::new(
             Vec3::new(0.0, -200.5, -1.0),
             200.0,
