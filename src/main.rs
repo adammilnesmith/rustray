@@ -39,6 +39,8 @@ fn main() {
         Vec3::new(0.0, 1.0, 0.0),
         90.0,
         nx as f64 / ny as f64,
+        0.1,
+        1.50,
     );
 
     let world = Arc::new(create_world());
