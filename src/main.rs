@@ -33,7 +33,13 @@ fn main() {
 
     let _window_thread = run_window_thread(Arc::clone(&image_data));
 
-    let camera: Camera<f64> = Camera::new(Vec3::new(0.0, 0.0, 0.0), 90.0, nx as f64 / ny as f64);
+    let camera: Camera<f64> = Camera::new(
+        Vec3::new(0.25, 0.25, 0.25),
+        Vec3::new(0.0, 0.0, -1.5),
+        Vec3::new(0.0, 1.0, 0.0),
+        90.0,
+        nx as f64 / ny as f64,
+    );
 
     let world = Arc::new(create_world());
 

@@ -10,15 +10,24 @@ pub struct Camera<T> {
 }
 
 impl Camera<f64> {
-    pub fn new(location: Vec3<f64>, vfov: f64, aspect: f64) -> Camera<f64> {
+    pub fn new(
+        location: Vec3<f64>,
+        look_at: Vec3<f64>,
+        vup: Vec3<f64>,
+        vfov: f64,
+        aspect: f64,
+    ) -> Camera<f64> {
         let theta = vfov * std::f64::consts::PI / 180.0;
         let half_height = (theta / 2.0).tan();
         let half_width = aspect * half_height;
+        let w = (location - look_at).unit();
+        let u = vup.cross(w).unit();
+        let v = w.cross(u);
         Camera {
             location,
-            lower_left: Vec3::new(-half_width, -half_height, -1.0),
-            horizontal: Vec3::new(2.0 * half_width, 0.0, 0.0),
-            vertical: Vec3::new(0.0, 2.0 * half_height, 0.0),
+            lower_left: location - half_width * u - half_height * v - w,
+            horizontal: 2.0 * half_width * u,
+            vertical: 2.0 * half_height * v,
         }
     }
 
