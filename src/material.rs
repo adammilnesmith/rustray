@@ -128,33 +128,24 @@ fn interact_with_dielectric(
     refractive_index: &f64,
 ) -> LightInteraction<f64> {
     let reflected = reflect(*ray.direction(), hit_normal.direction());
-    let inline_later = ray.direction().unit().dot(hit_normal.direction().unit());
-
-    let (outward_normal, ni_over_nt) = if inline_later > 0.0 {
-        /*eprintln!(
-            "{:?}.dot({:?}) = {}",
-            ray.direction().unit(),
-            hit_normal.direction().unit(),
-            inline_later
-        );*/
-        (-hit_normal.direction().unit(), *refractive_index)
-    } else {
-        /*eprintln!(
-            "{:?}.dot({:?}) = {}",
-            ray.direction().unit(),
-            hit_normal.direction().unit(),
-            inline_later
-        );*/
-        (hit_normal.direction().unit(), 1.0 / refractive_index)
-    };
-    /*eprintln!(
-        "hit_normal.direction(): {:?}\toutward_normal: {:?}\trefractive_index: {}\tni_over_nt: {}\n",
-        hit_normal.direction().unit(),
-        outward_normal,
-        refractive_index,
-        ni_over_nt
-    );*/
+    let hit_normal_unit_vector = hit_normal.direction().unit();
+    let (outward_normal, ni_over_nt, cosine) =
+        if ray.direction().unit().dot(hit_normal_unit_vector) > 0.0 {
+            (
+                -hit_normal_unit_vector,
+                *refractive_index,
+                refractive_index * ray.direction().dot(hit_normal_unit_vector)
+                    / ray.direction().length(),
+            )
+        } else {
+            (
+                hit_normal_unit_vector,
+                1.0 / refractive_index,
+                -(ray.direction().dot(hit_normal_unit_vector) / ray.direction().length()),
+            )
+        };
     let scattered = refract(*ray.direction(), &outward_normal, ni_over_nt)
+        .filter(|_| schlick(cosine, *refractive_index) < rand::thread_rng().gen::<f64>())
         .or(Some(reflected))
         .map(|ray_direction| {
             ScatteredRay::new(
@@ -167,6 +158,13 @@ fn interact_with_dielectric(
         .collect();
 
     LightInteraction::new(Vec3::new(0.0, 0.0, 0.0), scattered)
+}
+
+#[inline]
+fn schlick(cosine: f64, refractive_index: f64) -> f64 {
+    let r0 = (1.0 - refractive_index) / (1.0 + refractive_index);
+    let r0 = r0 * r0;
+    r0 + (1.0 - r0) * f64::powi(1.0 - cosine, 5)
 }
 
 #[inline]

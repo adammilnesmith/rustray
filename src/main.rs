@@ -42,7 +42,7 @@ fn main() {
 
     let world = Arc::new(create_world());
 
-    let samples = 64;
+    let samples = 512;
     draw_to_image_data(&image_data, &camera, &world, samples);
     output_ppm(image_data);
     //window_thread.join().unwrap();
