@@ -169,10 +169,11 @@ fn schlick(cosine: f64, refractive_index: f64) -> f64 {
 
 #[inline]
 fn refract(inbound: Vec3<f64>, normal: &Vec3<f64>, ni_over_nt: f64) -> Option<Vec3<f64>> {
-    let dt = inbound.dot(*normal);
+    let inbound_unit = inbound.unit();
+    let dt = inbound_unit.dot(*normal);
     let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
     if discriminant > 0.0 {
-        Some(ni_over_nt * (inbound - *normal * dt) - *normal * discriminant.sqrt())
+        Some(ni_over_nt * (inbound_unit - *normal * dt) - *normal * discriminant.sqrt())
     } else {
         None
     }
